@@ -86,11 +86,28 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <BookProvider>
             <GoalProvider>
-              <Stack screenOptions={{ headerShown: false }}>
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  // Shared style for ALL screens that opt in to headerShown: true
+                  headerBackTitle: "Back",
+                  headerShadowVisible: false,
+                  headerStyle: { backgroundColor: "transparent" },
+                  headerTitleStyle: { fontSize: 17, fontWeight: "600" },
+                }}
+              >
                 <Stack.Screen name="index" />
                 <Stack.Screen name="auth" />
                 <Stack.Screen name="(tabs)" />
                 <Stack.Screen name="goal/[id]" options={{ headerShown: true }} />
+                <Stack.Screen name="book/[id]" options={{ headerShown: true }} />
+                <Stack.Screen name="settings/app-settings" options={{ headerShown: true }} />
+                <Stack.Screen name="settings/profile" options={{ headerShown: true }} />
+                <Stack.Screen name="settings/change-password" options={{ headerShown: true }} />
+                <Stack.Screen name="settings/about" options={{ headerShown: true }} />
+                <Stack.Screen name="settings/privacy-policy" options={{ headerShown: true }} />
+                <Stack.Screen name="settings/terms" options={{ headerShown: true }} />
+                <Stack.Screen name="settings/about-us" options={{ headerShown: true }} />
                 <Stack.Screen name="oauth/callback" />
               </Stack>
               <StatusBar style="auto" />
