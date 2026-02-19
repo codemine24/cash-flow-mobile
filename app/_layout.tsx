@@ -9,6 +9,7 @@ import { Platform } from "react-native";
 import "@/lib/_core/nativewind-pressable";
 import { ThemeProvider } from "@/lib/theme-provider";
 import { BookProvider } from "@/lib/book-context";
+import { GoalProvider } from "@/lib/goal-context";
 import {
   SafeAreaFrameContext,
   SafeAreaInsetsContext,
@@ -84,13 +85,16 @@ export default function RootLayout() {
       <trpc.Provider client={trpcClient} queryClient={queryClient}>
         <QueryClientProvider client={queryClient}>
           <BookProvider>
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="index" />
-              <Stack.Screen name="auth" />
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="oauth/callback" />
-            </Stack>
-            <StatusBar style="auto" />
+            <GoalProvider>
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="index" />
+                <Stack.Screen name="auth" />
+                <Stack.Screen name="(tabs)" />
+                <Stack.Screen name="goal/[id]" options={{ headerShown: true }} />
+                <Stack.Screen name="oauth/callback" />
+              </Stack>
+              <StatusBar style="auto" />
+            </GoalProvider>
           </BookProvider>
         </QueryClientProvider>
       </trpc.Provider>
