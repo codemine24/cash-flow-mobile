@@ -1,184 +1,382 @@
 import { ScrollView, Text, View, TouchableOpacity } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
-import { useExpenses } from "@/lib/expense-context";
+import { useBooks } from "@/lib/book-context";
+import { useGoals } from "@/lib/goal-context";
 import { useState } from "react";
 import { useColors } from "@/hooks/use-colors";
-import {
-  formatCurrency,
-  getMonthlyExpenses,
-  getWeeklyExpenses,
-  getYearlyExpenses,
-  getTotalByCategory,
-} from "@/lib/expense-utils";
+import { formatCurrency as bookFormatCurrency, getCategoryIcon, getCategoryName } from "@/lib/book-utils";
+import { calculateGoalProgress, calculateGoalSaved } from "@/lib/goal-utils";
 import { cn } from "@/lib/utils";
 
-type TimePeriod = "week" | "month" | "year";
+type TimePeriod = "week" | "month";
+
+// ─── Date filtering helpers ───────────────────────────────────────────────
+function isWithinDays(dateStr: string, days: number): boolean {
+  const date = new Date(dateStr);
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  return date >= cutoff;
+}
+
+// ─── Small reusable components ────────────────────────────────────────────
+
+/** Section heading used throughout the screen */
+function SectionTitle({ children }: { children: string }) {
+  return <Text className="text-lg font-bold text-foreground mb-4">{children}</Text>;
+}
+
+/** A single stat card: label on top, big value below */
+function StatCard({
+  label,
+  value,
+  valueColor,
+  sub,
+}: {
+  label: string;
+  value: string;
+  valueColor?: string;
+  sub?: string;
+}) {
+  return (
+    <View className="flex-1 bg-surface rounded-xl p-4 border border-border items-center">
+      <Text className="text-xs text-muted font-medium mb-1 text-center">{label}</Text>
+      <Text
+        className="text-xl font-bold text-center"
+        style={valueColor ? { color: valueColor } : undefined}
+      >
+        {value}
+      </Text>
+      {sub ? <Text className="text-xs text-muted mt-1 text-center">{sub}</Text> : null}
+    </View>
+  );
+}
+
+/** Horizontal bar row (used for category breakdown) */
+function BarRow({
+  label,
+  icon,
+  amount,
+  percentage,
+  barColor,
+}: {
+  label: string;
+  icon: string;
+  amount: number;
+  percentage: number;
+  barColor: string;
+}) {
+  return (
+    <View className="mb-4">
+      <View className="flex-row items-center justify-between mb-1">
+        <View className="flex-row items-center flex-1">
+          <Text className="mr-2 text-base">{icon}</Text>
+          <Text className="text-sm font-medium text-foreground flex-1" numberOfLines={1}>
+            {label}
+          </Text>
+        </View>
+        <Text className="text-sm font-bold text-foreground ml-2">
+          {bookFormatCurrency(amount)}
+        </Text>
+      </View>
+      <View className="h-2 bg-background rounded-full overflow-hidden border border-border">
+        <View
+          className="h-full rounded-full"
+          style={{ width: `${percentage}%`, backgroundColor: barColor }}
+        />
+      </View>
+    </View>
+  );
+}
+
+// ─── Main screen ─────────────────────────────────────────────────────────
 
 export default function StatisticsScreen() {
   const colors = useColors();
-  const { state } = useExpenses();
-  const [timePeriod, setTimePeriod] = useState<TimePeriod>("month");
+  const { state: bookState } = useBooks();
+  const { state: goalState } = useGoals();
+  const [period, setPeriod] = useState<TimePeriod>("month");
 
-  let filteredExpenses = state.expenses;
-  if (timePeriod === "week") {
-    filteredExpenses = getWeeklyExpenses(state.expenses);
-  } else if (timePeriod === "month") {
-    filteredExpenses = getMonthlyExpenses(state.expenses);
-  } else {
-    filteredExpenses = getYearlyExpenses(state.expenses);
-  }
+  const days = period === "week" ? 7 : 30;
 
-  const totalByCategory = getTotalByCategory(filteredExpenses);
-  const totalSpent = filteredExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+  // ── Expense calculations ───────────────────────────────────────────────
 
-  const getCategoryColor = (categoryId: string) => {
-    return state.categories.find((c) => c.id === categoryId)?.color || "#B0B0B0";
-  };
+  // Flatten all transactions across all books, filtered by time period
+  const allTransactions = bookState.books.flatMap((b) =>
+    b.transactions.filter((t) => isWithinDays(t.createdAt, days))
+  );
 
-  const getCategoryName = (categoryId: string) => {
-    return state.categories.find((c) => c.id === categoryId)?.name || "Other";
-  };
+  const totalIncome = allTransactions
+    .filter((t) => t.type === "deposit")
+    .reduce((s, t) => s + t.amount, 0);
 
-  // Sort categories by spending
-  const sortedCategories = Object.entries(totalByCategory)
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, 5);
+  const totalExpense = allTransactions
+    .filter((t) => t.type === "expense")
+    .reduce((s, t) => s + t.amount, 0);
 
-  const maxAmount = Math.max(...Object.values(totalByCategory), 1);
+  const netBalance = totalIncome - totalExpense;
+
+  // Spending by category — only expense transactions
+  const expenseTransactions = allTransactions.filter((t) => t.type === "expense");
+  const byCategory: Record<string, number> = {};
+  expenseTransactions.forEach((t) => {
+    byCategory[t.category] = (byCategory[t.category] ?? 0) + t.amount;
+  });
+  const sortedCategories = Object.entries(byCategory).sort(([, a], [, b]) => b - a);
+  const maxCategoryAmount = Math.max(...Object.values(byCategory), 1);
+
+  // Active books (have at least 1 transaction in the period)
+  const activeBooksCount = bookState.books.filter((b) =>
+    b.transactions.some((t) => isWithinDays(t.createdAt, days))
+  ).length;
+
+  // Average daily spend
+  const avgDaily = days > 0 ? totalExpense / days : 0;
+
+  // ── Goal calculations ──────────────────────────────────────────────────
+
+  // Total saved vs total target across all goals
+  const totalSaved = goalState.goals.reduce((s, g) => s + calculateGoalSaved(g), 0);
+  const totalTarget = goalState.goals.reduce((s, g) => s + g.target, 0);
+  const overallGoalProgress = totalTarget > 0 ? (totalSaved / totalTarget) * 100 : 0;
+
+  // Goals added funds in the current period
+  const goalFundsAdded = goalState.goals.flatMap((g) =>
+    g.entries.filter((e) => e.type === "add" && isWithinDays(e.createdAt, days))
+  ).reduce((s, e) => s + e.amount, 0);
+
+  const goalsCompleted = goalState.goals.filter((g) => calculateGoalProgress(g) >= 100).length;
+  const goalsInProgress = goalState.goals.filter((g) => {
+    const p = calculateGoalProgress(g);
+    return p > 0 && p < 100;
+  }).length;
 
   return (
     <ScreenContainer className="p-4 bg-background">
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
-        {/* Header */}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 40 }}
+      >
+        {/* ── Header ── */}
         <View className="mb-6">
           <Text className="text-3xl font-bold text-foreground">Statistics</Text>
-          <Text className="text-sm text-muted mt-1">Your spending insights</Text>
+          <Text className="text-sm text-muted mt-1">Your financial overview</Text>
         </View>
 
-        {/* Time Period Toggle */}
+        {/* ── Period toggle ── */}
         <View className="flex-row gap-2 mb-6 bg-surface rounded-lg p-1 border border-border">
-          {(["week", "month", "year"] as const).map((period) => (
+          {(["week", "month"] as const).map((p) => (
             <TouchableOpacity
-              key={period}
-              onPress={() => setTimePeriod(period)}
+              key={p}
+              onPress={() => setPeriod(p)}
               className={cn(
                 "flex-1 py-2 rounded-md items-center justify-center",
-                timePeriod === period ? "bg-primary" : "bg-transparent"
+                period === p ? "bg-primary" : "bg-transparent"
               )}
             >
               <Text
                 className={cn(
-                  "text-sm font-semibold capitalize",
-                  timePeriod === period ? "text-white" : "text-foreground"
+                  "text-sm font-semibold",
+                  period === p ? "text-white" : "text-foreground"
                 )}
               >
-                {period}
+                {p === "week" ? "This Week" : "This Month"}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        {/* Total Spent Card */}
-        <View className="bg-gradient-to-r from-primary to-primary/80 rounded-2xl p-6 mb-6">
-          <Text className="text-sm text-white/80 font-medium mb-2">Total Spent</Text>
-          <Text className="text-4xl font-bold text-white">
-            {formatCurrency(totalSpent)}
-          </Text>
-          <Text className="text-xs text-white/70 mt-3">
-            {filteredExpenses.length} transaction{filteredExpenses.length !== 1 ? "s" : ""}
-          </Text>
+        {/* ════════════════════════════════════════
+            SECTION 1 — EXPENSES
+        ════════════════════════════════════════ */}
+        <View className="mb-2">
+          <View className="flex-row items-center gap-2 mb-4">
+            <Text className="text-lg font-bold text-foreground">💸 Expenses</Text>
+            <View className="flex-1 h-px bg-border" />
+          </View>
         </View>
 
-        {/* Top Categories */}
-        <View className="mb-6">
-          <Text className="text-lg font-bold text-foreground mb-4">Top Categories</Text>
+        {/* Top 3 stat cards */}
+        <View className="flex-row gap-3 mb-4">
+          <StatCard
+            label="Total Spent"
+            value={bookFormatCurrency(totalExpense)}
+            valueColor={colors.error}
+          />
+          <StatCard
+            label="Income"
+            value={bookFormatCurrency(totalIncome)}
+            valueColor={colors.success}
+          />
+        </View>
+        <View className="flex-row gap-3 mb-6">
+          <StatCard
+            label="Net Balance"
+            value={bookFormatCurrency(netBalance)}
+            valueColor={netBalance >= 0 ? colors.success : colors.error}
+          />
+          <StatCard
+            label="Avg / Day"
+            value={bookFormatCurrency(avgDaily)}
+            sub={`over ${days} days`}
+          />
+        </View>
 
-          {filteredExpenses.length === 0 ? (
-            <View className="bg-surface rounded-xl p-8 items-center justify-center border border-border">
-              <Text className="text-muted text-center">No expenses in this period</Text>
+        {/* Active books row */}
+        <View className="bg-surface rounded-xl p-4 border border-border flex-row items-center justify-between mb-6">
+          <View>
+            <Text className="text-xs text-muted font-medium">Active Books</Text>
+            <Text className="text-2xl font-bold text-foreground mt-0.5">{activeBooksCount}</Text>
+          </View>
+          <View className="items-end">
+            <Text className="text-xs text-muted font-medium">Transactions</Text>
+            <Text className="text-2xl font-bold text-foreground mt-0.5">
+              {allTransactions.length}
+            </Text>
+          </View>
+        </View>
+
+        {/* Spending by category */}
+        {sortedCategories.length > 0 ? (
+          <View className="bg-surface rounded-xl p-4 border border-border mb-8">
+            <SectionTitle>Spending by Category</SectionTitle>
+            {sortedCategories.map(([catId, amount]) => (
+              <BarRow
+                key={catId}
+                label={getCategoryName(catId)}
+                icon={getCategoryIcon(catId)}
+                amount={amount}
+                percentage={(amount / maxCategoryAmount) * 100}
+                barColor={colors.error}
+              />
+            ))}
+          </View>
+        ) : (
+          <View className="bg-surface rounded-xl p-6 border border-border items-center mb-8">
+            <Text className="text-muted text-sm text-center">
+              No expense transactions {period === "week" ? "this week" : "this month"}
+            </Text>
+          </View>
+        )}
+
+        {/* ════════════════════════════════════════
+            SECTION 2 — GOALS
+        ════════════════════════════════════════ */}
+        <View className="mb-2">
+          <View className="flex-row items-center gap-2 mb-4">
+            <Text className="text-lg font-bold text-foreground">🎯 Goals</Text>
+            <View className="flex-1 h-px bg-border" />
+          </View>
+        </View>
+
+        {goalState.goals.length === 0 ? (
+          <View className="bg-surface rounded-xl p-6 border border-border items-center mb-6">
+            <Text className="text-muted text-sm text-center">
+              No goals created yet
+            </Text>
+          </View>
+        ) : (
+          <>
+            {/* Goal summary stat cards */}
+            <View className="flex-row gap-3 mb-4">
+              <StatCard
+                label="Total Saved"
+                value={bookFormatCurrency(totalSaved)}
+                valueColor={colors.primary}
+              />
+              <StatCard
+                label="Total Target"
+                value={bookFormatCurrency(totalTarget)}
+              />
             </View>
-          ) : (
-            <View className="gap-3">
-              {sortedCategories.map(([categoryId, amount]) => {
-                const percentage = (amount / maxAmount) * 100;
+            <View className="flex-row gap-3 mb-4">
+              <StatCard
+                label="Added This Period"
+                value={bookFormatCurrency(goalFundsAdded)}
+                valueColor={colors.success}
+              />
+              <StatCard
+                label="Completed"
+                value={`${goalsCompleted} / ${goalState.goals.length}`}
+                sub={`${goalsInProgress} in progress`}
+              />
+            </View>
+
+            {/* Overall goal progress bar */}
+            <View className="bg-surface rounded-xl p-4 border border-border mb-4">
+              <View className="flex-row justify-between mb-2">
+                <Text className="text-sm font-semibold text-foreground">Overall Progress</Text>
+                <Text className="text-sm font-bold" style={{ color: colors.primary }}>
+                  {overallGoalProgress.toFixed(1)}%
+                </Text>
+              </View>
+              <View className="h-3 bg-background rounded-full overflow-hidden border border-border">
+                <View
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${overallGoalProgress}%`,
+                    backgroundColor: colors.primary,
+                  }}
+                />
+              </View>
+              <Text className="text-xs text-muted mt-2">
+                {bookFormatCurrency(totalSaved)} saved of {bookFormatCurrency(totalTarget)}
+              </Text>
+            </View>
+
+            {/* Per-goal progress list */}
+            <View className="bg-surface rounded-xl border border-border overflow-hidden mb-6">
+              <View className="px-4 pt-4 pb-2">
+                <SectionTitle>Goal Breakdown</SectionTitle>
+              </View>
+              {goalState.goals.map((goal, index) => {
+                const saved = calculateGoalSaved(goal);
+                const progress = calculateGoalProgress(goal);
+                const isComplete = progress >= 100;
                 return (
-                  <View key={categoryId}>
-                    <View className="flex-row items-center justify-between mb-2">
-                      <View className="flex-row items-center flex-1">
-                        <View
-                          className="w-3 h-3 rounded-full mr-2"
-                          style={{ backgroundColor: getCategoryColor(categoryId) }}
-                        />
-                        <Text className="text-sm font-medium text-foreground">
-                          {getCategoryName(categoryId)}
-                        </Text>
-                      </View>
-                      <Text className="text-sm font-bold text-foreground">
-                        {formatCurrency(amount)}
+                  <View
+                    key={goal.id}
+                    className={cn(
+                      "px-4 pb-4",
+                      index !== goalState.goals.length - 1 && "border-b border-border mb-4"
+                    )}
+                  >
+                    <View className="flex-row justify-between items-center mb-2">
+                      <Text className="text-sm font-semibold text-foreground flex-1" numberOfLines={1}>
+                        {goal.name}
                       </Text>
+                      {isComplete ? (
+                        <Text className="text-xs font-bold text-success ml-2">✓ Done</Text>
+                      ) : (
+                        <Text
+                          className="text-xs font-bold ml-2"
+                          style={{ color: colors.primary }}
+                        >
+                          {progress.toFixed(0)}%
+                        </Text>
+                      )}
                     </View>
-                    <View className="h-2 bg-surface rounded-full overflow-hidden border border-border">
+                    <View className="h-2 bg-background rounded-full overflow-hidden border border-border mb-1">
                       <View
                         className="h-full rounded-full"
                         style={{
-                          width: `${percentage}%`,
-                          backgroundColor: getCategoryColor(categoryId),
+                          width: `${progress}%`,
+                          backgroundColor: isComplete ? colors.success : colors.primary,
                         }}
                       />
+                    </View>
+                    <View className="flex-row justify-between">
+                      <Text className="text-xs text-muted">
+                        {bookFormatCurrency(saved)} saved
+                      </Text>
+                      <Text className="text-xs text-muted">
+                        {bookFormatCurrency(goal.target)} target
+                      </Text>
                     </View>
                   </View>
                 );
               })}
             </View>
-          )}
-        </View>
-
-        {/* Category Breakdown */}
-        <View className="mb-6">
-          <Text className="text-lg font-bold text-foreground mb-4">All Categories</Text>
-          <View className="bg-surface rounded-xl border border-border overflow-hidden">
-            {state.categories.map((category, index) => {
-              const amount = totalByCategory[category.id] || 0;
-              const percentage =
-                totalSpent > 0 ? ((amount / totalSpent) * 100).toFixed(1) : "0.0";
-
-              return (
-                <View
-                  key={category.id}
-                  className={cn(
-                    "flex-row items-center justify-between p-4",
-                    index !== state.categories.length - 1 && "border-b border-border"
-                  )}
-                >
-                  <View className="flex-row items-center flex-1">
-                    <View
-                      className="w-3 h-3 rounded-full mr-3"
-                      style={{ backgroundColor: category.color }}
-                    />
-                    <View className="flex-1">
-                      <Text className="text-sm font-medium text-foreground">
-                        {category.name}
-                      </Text>
-                      <Text className="text-xs text-muted mt-0.5">
-                        {formatCurrency(amount)}
-                      </Text>
-                    </View>
-                  </View>
-                  <Text className="text-sm font-semibold text-foreground">{percentage}%</Text>
-                </View>
-              );
-            })}
-          </View>
-        </View>
-
-        {/* Average Daily Spending */}
-        {filteredExpenses.length > 0 && (
-          <View className="bg-surface rounded-xl p-4 border border-border">
-            <Text className="text-sm text-muted font-medium mb-2">Average Daily</Text>
-            <Text className="text-2xl font-bold text-foreground">
-              {formatCurrency(totalSpent / (timePeriod === "week" ? 7 : timePeriod === "month" ? 30 : 365))}
-            </Text>
-          </View>
+          </>
         )}
       </ScrollView>
     </ScreenContainer>
