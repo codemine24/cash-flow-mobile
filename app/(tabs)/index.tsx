@@ -6,6 +6,7 @@ import { CreateBookModal } from "@/components/create-book-modal";
 import { useColors } from "@/hooks/use-colors";
 import { calculateBookBalance, formatCurrency } from "@/lib/book-utils";
 import { useRouter, Link } from "expo-router";
+import { Plus } from "lucide-react-native";
 
 export default function HomeScreen() {
   const colors = useColors();
@@ -117,7 +118,7 @@ export default function HomeScreen() {
       {/* Floating Action Button */}
       <TouchableOpacity
         onPress={() => setShowCreateModal(true)}
-        className="absolute bottom-20 right-6 w-16 h-16 bg-primary rounded-full items-center justify-center shadow-lg"
+        className="absolute bottom-10 right-6 w-16 h-16 bg-primary rounded-full items-center justify-center shadow-lg"
         style={{
           shadowColor: colors.primary,
           shadowOffset: { width: 0, height: 4 },
@@ -126,7 +127,7 @@ export default function HomeScreen() {
           elevation: 8,
         }}
       >
-        <Text className="text-3xl text-white font-light">+</Text>
+        <Plus size={24} color="white" />
       </TouchableOpacity>
 
       {/* Create Book Modal */}

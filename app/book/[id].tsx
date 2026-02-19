@@ -7,6 +7,7 @@ import { useColors } from "@/hooks/use-colors";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useState } from "react";
 import { AddTransactionModal } from "@/components/add-transaction-modal";
+import { Plus } from "lucide-react-native";
 
 export default function BookDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -128,7 +129,7 @@ export default function BookDetailScreen() {
           elevation: 8,
         }}
       >
-        <IconSymbol size={24} name="plus" color="white" />
+        <Plus size={24} color="white" />
       </TouchableOpacity>
 
       <AddTransactionModal
