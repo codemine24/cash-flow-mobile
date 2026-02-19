@@ -1,20 +1,19 @@
-import { useLocalSearchParams, useRouter, Stack } from "expo-router";
-import { View, Text, ScrollView, TouchableOpacity, FlatList, Alert } from "react-native";
+import { AddTransactionModal } from "@/components/add-transaction-modal";
 import { ScreenContainer } from "@/components/screen-container";
+
 import { useBooks } from "@/lib/book-context";
 import { calculateBookBalance, formatCurrency } from "@/lib/book-utils";
-import { useColors } from "@/hooks/use-colors";
-import { IconSymbol } from "@/components/ui/icon-symbol";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+
 import { useState } from "react";
-import { AddTransactionModal } from "@/components/add-transaction-modal";
-import { Plus } from "lucide-react-native";
+import { Alert, FlatList, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 export default function BookDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const colors = useColors();
   const { state, deleteTransaction } = useBooks();
   const [showAddModal, setShowAddModal] = useState(false);
+  const [defaultType, setDefaultType] = useState<"deposit" | "expense">("expense");
 
   const book = state.books.find((b) => b.id === id);
 
@@ -53,7 +52,7 @@ export default function BookDetailScreen() {
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
           {/* Header Card */}
           <View className="bg-surface rounded-xl p-6 mb-6 border border-border">
-            <Text className="text-muted text-center mb-2">Current Balance</Text>
+            <Text className="text-muted text-center mb-2 text-lg">Current Balance 2</Text>
             <Text
               className={`text-4xl font-bold text-center mb-6 ${balance >= 0 ? "text-success" : "text-error"
                 }`}
@@ -118,24 +117,64 @@ export default function BookDetailScreen() {
       </ScreenContainer>
 
       {/* Floating Action Button */}
-      <TouchableOpacity
-        onPress={() => setShowAddModal(true)}
-        className="absolute bottom-10 right-6 w-14 h-14 bg-primary rounded-full items-center justify-center shadow-lg"
-        style={{
-          shadowColor: colors.primary,
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.3,
-          shadowRadius: 8,
-          elevation: 8,
-        }}
-      >
-        <Plus size={24} color="white" />
-      </TouchableOpacity>
+      {/* Floating Action Buttons */}
+      <View style={{
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        flexDirection: 'row',
+        paddingHorizontal: 16,
+        paddingBottom: 32,
+        paddingTop: 12,
+        backgroundColor: '#FFFFFF',
+        gap: 12,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 10,
+      }}>
+        <TouchableOpacity
+          onPress={() => {
+            setDefaultType("deposit");
+            setShowAddModal(true);
+          }}
+          style={{
+            flex: 1,
+            backgroundColor: '#2E7D32',
+            paddingVertical: 14,
+            borderRadius: 8,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 14, letterSpacing: 1 }}>+ CASH IN</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => {
+            setDefaultType("expense");
+            setShowAddModal(true);
+          }}
+          style={{
+            flex: 1,
+            backgroundColor: '#C62828',
+            paddingVertical: 14,
+            borderRadius: 8,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 14, letterSpacing: 1 }}>- CASH OUT</Text>
+        </TouchableOpacity>
+      </View>
 
       <AddTransactionModal
         visible={showAddModal}
         onClose={() => setShowAddModal(false)}
         bookId={book.id}
+        initialType={defaultType}
       />
     </>
   );
