@@ -12,6 +12,8 @@ import { useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Mail, ArrowLeft, ShieldCheck } from "lucide-react-native";
+import axios from "axios";
+import { setSessionToken } from "@/lib/_core/auth";
 
 // Two steps on the same screen:
 //   "email"  → user enters their email and taps "Send OTP"
@@ -51,24 +53,46 @@ export default function AuthScreen() {
     });
   };
 
-  const handleSendOtp = () => {
+  const handleSendOtp = async () => {
     if (!email.trim()) return;
-    // Simulate a network request with a 1s loading spinner
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      animateToStep("otp"); // move to OTP step
-    }, 1000);
+
+    try {
+      const response = await axios.post(`${process.env.EXPO_PUBLIC_SERVER_URL}/auth/get-otp`, {
+        email,
+      });
+
+      alert(response.data.message);
+
+      if (response.data.success) {
+        animateToStep("otp");
+      } else {
+        console.error(response.data.error);
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  const handleVerifyOtp = () => {
-    if (otp.length < 4) return;
+  const handleVerifyOtp = async () => {
+    if (otp.length < 6) return;
     setLoading(true);
-    setTimeout(() => {
+    try {
+      const response = await axios.post(`${process.env.EXPO_PUBLIC_SERVER_URL}/auth/validate-otp`, {
+        email,
+        otp: Number(otp),
+      });
+
+      if (response.data.success) {
+        router.replace("/(tabs)");
+      } else {
+        console.error(response.data.error);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
       setLoading(false);
-      // Replace the current route so the user can't go back to auth
-      router.replace("/(tabs)");
-    }, 1000);
+    }
+
   };
 
   return (
@@ -265,10 +289,10 @@ export default function AuthScreen() {
 
                 <TouchableOpacity
                   onPress={handleVerifyOtp}
-                  disabled={loading || otp.length < 4}
+                  disabled={loading || otp.length < 6}
                   activeOpacity={0.85}
                   style={{
-                    backgroundColor: otp.length >= 4 ? "#22c55e" : "#d1d5db",
+                    backgroundColor: otp.length >= 6 ? "#22c55e" : "#d1d5db",
                     borderRadius: 14,
                     paddingVertical: 16,
                     alignItems: "center",
