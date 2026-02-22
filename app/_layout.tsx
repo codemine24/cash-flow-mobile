@@ -20,6 +20,7 @@ import type { EdgeInsets, Metrics, Rect } from "react-native-safe-area-context";
 
 import { trpc, createTRPCClient } from "@/lib/trpc";
 import { initManusRuntime, subscribeSafeAreaInsets } from "@/lib/_core/manus-runtime";
+import Toast from 'react-native-toast-message';
 
 const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 const DEFAULT_WEB_FRAME: Rect = { x: 0, y: 0, width: 0, height: 0 };
@@ -109,7 +110,10 @@ export default function RootLayout() {
                 <Stack.Screen name="settings/terms" options={{ headerShown: true }} />
                 <Stack.Screen name="settings/about-us" options={{ headerShown: true }} />
                 <Stack.Screen name="oauth/callback" />
+
               </Stack>
+              {/* Toast */}
+              <Toast />
               <StatusBar style="auto" />
             </GoalProvider>
           </BookProvider>

@@ -14,6 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Mail, ArrowLeft, ShieldCheck } from "lucide-react-native";
 import axios from "axios";
 import { setSessionToken } from "@/lib/_core/auth";
+import Toast from "react-native-toast-message";
 
 // Two steps on the same screen:
 //   "email"  → user enters their email and taps "Send OTP"
@@ -61,12 +62,17 @@ export default function AuthScreen() {
         email,
       });
 
-      alert(response.data.message);
-
       if (response.data.success) {
+        Toast.show({
+          type: 'success',
+          text1: response.data.message,
+        });
         animateToStep("otp");
       } else {
-        console.error(response.data.error);
+        Toast.show({
+          type: 'error',
+          text1: response.data.message,
+        });
       }
     } catch (error) {
       console.error(error);
@@ -83,9 +89,16 @@ export default function AuthScreen() {
       });
 
       if (response.data.success) {
+        Toast.show({
+          type: 'success',
+          text1: response.data.message,
+        });
         router.replace("/(tabs)");
       } else {
-        console.error(response.data.error);
+        Toast.show({
+          type: 'error',
+          text1: response.data.message,
+        });
       }
     } catch (error) {
       console.error(error);
