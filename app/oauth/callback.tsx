@@ -33,7 +33,7 @@ export default function OAuthCallback() {
         // Check for sessionToken in params first (web OAuth callback from server redirect)
         if (params.sessionToken) {
           console.log("[OAuth] Session token found in params (web callback)");
-          await Auth.setSessionToken(params.sessionToken);
+          await Auth.setAccessToken(params.sessionToken);
 
           // Decode and store user info if available
           if (params.user) {
@@ -152,7 +152,7 @@ export default function OAuthCallback() {
         // If we have sessionToken directly from URL, use it
         if (sessionToken) {
           console.log("[OAuth] Session token found in URL, storing...");
-          await Auth.setSessionToken(sessionToken);
+          await Auth.setAccessToken(sessionToken);
           console.log("[OAuth] Session token stored successfully");
           // User info is already in the OAuth callback response
           // No need to fetch from API
@@ -189,7 +189,7 @@ export default function OAuthCallback() {
         if (result.sessionToken) {
           console.log("[OAuth] Session token received, storing...");
           // Store session token
-          await Auth.setSessionToken(result.sessionToken);
+          await Auth.setAccessToken(result.sessionToken);
           console.log("[OAuth] Session token stored successfully");
 
           // Store user info if available

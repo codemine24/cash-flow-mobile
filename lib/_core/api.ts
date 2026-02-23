@@ -18,7 +18,7 @@ export async function apiCall<T>(endpoint: string, options: RequestInit = {}): P
   // - Web (including iframe): use cookie-based auth (browser handles automatically)
   //   Cookie is set on backend domain via POST /api/auth/session after receiving token via postMessage
   if (Platform.OS !== "web") {
-    const sessionToken = await Auth.getSessionToken();
+    const sessionToken = await Auth.getAccessToken();
     console.log("[API] apiCall:", {
       endpoint,
       hasToken: !!sessionToken,

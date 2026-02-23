@@ -12,9 +12,8 @@ import { useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Mail, ArrowLeft, ShieldCheck } from "lucide-react-native";
-import axios from "axios";
-import { setSessionToken } from "@/lib/_core/auth";
 import Toast from "react-native-toast-message";
+import { useSendOtp, useVerifyOtp } from "@/api/auth";
 
 // Two steps on the same screen:
 //   "email"  → user enters their email and taps "Send OTP"
@@ -27,7 +26,9 @@ export default function AuthScreen() {
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
-  const [loading, setLoading] = useState(false);
+
+  const sentOtpMutation = useSendOtp();
+  const verifyOtpMutation = useVerifyOtp();
 
   // Animated value for the content sliding between steps
   // Starts at 0 (visible), will slide left to -width on step change
@@ -58,20 +59,19 @@ export default function AuthScreen() {
     if (!email.trim()) return;
 
     try {
-      const response = await axios.post(`${process.env.EXPO_PUBLIC_SERVER_URL}/auth/get-otp`, {
-        email,
-      });
+      const response: any = await sentOtpMutation.mutateAsync(email);
+      console.log("Send OTP Response:", response);
 
-      if (response.data.success) {
+      if (response?.success) {
         Toast.show({
           type: 'success',
-          text1: response.data.message,
+          text1: response?.message || "OTP sent!",
         });
         animateToStep("otp");
       } else {
         Toast.show({
           type: 'error',
-          text1: response.data.message,
+          text1: response?.message || "Failed to send OTP",
         });
       }
     } catch (error) {
@@ -81,29 +81,24 @@ export default function AuthScreen() {
 
   const handleVerifyOtp = async () => {
     if (otp.length < 6) return;
-    setLoading(true);
-    try {
-      const response = await axios.post(`${process.env.EXPO_PUBLIC_SERVER_URL}/auth/validate-otp`, {
-        email,
-        otp: Number(otp),
-      });
 
-      if (response.data.success) {
+    try {
+      const response: any = await verifyOtpMutation.mutateAsync({ email, otp });
+
+      if (response?.success) {
         Toast.show({
           type: 'success',
-          text1: response.data.message,
+          text1: response?.message || "Verified!",
         });
         router.replace("/(tabs)");
       } else {
         Toast.show({
           type: 'error',
-          text1: response.data.message,
+          text1: response?.message || "Invalid OTP",
         });
       }
     } catch (error) {
       console.error(error);
-    } finally {
-      setLoading(false);
     }
 
   };
@@ -217,7 +212,7 @@ export default function AuthScreen() {
 
                 <TouchableOpacity
                   onPress={handleSendOtp}
-                  disabled={loading || !email.trim()}
+                  disabled={sentOtpMutation.isPending || !email.trim()}
                   activeOpacity={0.85}
                   style={{
                     backgroundColor: email.trim() ? "#22c55e" : "#d1d5db",
@@ -228,7 +223,7 @@ export default function AuthScreen() {
                     marginBottom: 32,
                   }}
                 >
-                  {loading ? (
+                  {sentOtpMutation.isPending ? (
                     <ActivityIndicator color="#fff" />
                   ) : (
                     <Text style={{ fontSize: 16, fontWeight: "700", color: "#ffffff" }}>
@@ -302,7 +297,7 @@ export default function AuthScreen() {
 
                 <TouchableOpacity
                   onPress={handleVerifyOtp}
-                  disabled={loading || otp.length < 6}
+                  disabled={verifyOtpMutation.isPending || otp.length < 6}
                   activeOpacity={0.85}
                   style={{
                     backgroundColor: otp.length >= 6 ? "#22c55e" : "#d1d5db",
@@ -313,7 +308,7 @@ export default function AuthScreen() {
                     marginBottom: 32,
                   }}
                 >
-                  {loading ? (
+                  {verifyOtpMutation.isPending ? (
                     <ActivityIndicator color="#fff" />
                   ) : (
                     <Text style={{ fontSize: 16, fontWeight: "700", color: "#ffffff" }}>
