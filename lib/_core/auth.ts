@@ -1,15 +1,7 @@
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
-import { ACCESS_TOKEN_KEY, USER_INFO_KEY } from "@/constants/oauth";
-
-export type User = {
-  id: number;
-  openId: string;
-  name: string | null;
-  email: string | null;
-  loginMethod: string | null;
-  lastSignedIn: Date;
-};
+import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_INFO_KEY } from "@/constants/oauth";
+import { User } from "@/interface/user";
 
 export async function getAccessToken(): Promise<string | null> {
   try {
@@ -29,6 +21,28 @@ export async function getAccessToken(): Promise<string | null> {
     return token;
   } catch (error) {
     console.error("[Auth] Failed to get session token:", error);
+    return null;
+  }
+}
+
+export async function getRefreshToken(): Promise<string | null> {
+  try {
+    // Web platform uses cookie-based auth, no manual token management needed
+    if (Platform.OS === "web") {
+      console.log("[Auth] Web platform uses cookie-based auth, skipping token retrieval");
+      return null;
+    }
+
+    // Use SecureStore for native
+    console.log("[Auth] Getting refresh token...");
+    const token = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+    console.log(
+      "[Auth] Refresh token retrieved from SecureStore:",
+      token ? `present (${token.substring(0, 20)}...)` : "missing",
+    );
+    return token;
+  } catch (error) {
+    console.error("[Auth] Failed to get refresh token:", error);
     return null;
   }
 }

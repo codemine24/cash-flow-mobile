@@ -1,12 +1,16 @@
 import { User } from "@/interface/user";
-import { createContext, useContext, useState } from "react";
+import { getAccessToken, getUserInfo } from "@/lib/_core/auth";
+import { createContext, useContext, useEffect, useState } from "react";
+
+export type AuthState = {
+  isAuthenticated: boolean;
+  user: User | null;
+}
 
 export type AuthContextType = {
-  authState: {
-    isAuthenticated: boolean;
-    token: string | null;
-    user: User | null;
-  },
+  authState: AuthState;
+  setAuthState: (authState: AuthState) => void;
+  authReady: boolean;
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null);
@@ -20,53 +24,37 @@ export function useAuth() {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [authState, setAuthState] = useState<{
-    isAuthenticated: boolean;
-    token: string | null;
-    user: User | null;
-  }>({
+  const [authState, setAuthState] = useState<AuthState>({
     isAuthenticated: false,
-    token: null,
     user: null,
   });
+  // This state is used to prevent the app from flashing the splash screen
+  const [authReady, setAuthReady] = useState(false);
 
-  const login = async (email: string, password: string) => {
-    try {
-      const response = await fetch("http://localhost:3000/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
+  useEffect(() => {
+    const getAuthUser = async () => {
+      const token = await getAccessToken();
+      const user = await getUserInfo();
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Login failed");
+      if (token && user) {
+        setAuthState({
+          isAuthenticated: true,
+          user: user,
+        });
       }
-
-      setAuthState({
-        isAuthenticated: true,
-        token: data.token,
-        user: data.user,
-      });
-    } catch (error) {
-      console.error("Login error:", error);
-      throw error;
+      setAuthReady(true);
     }
-  };
+    getAuthUser();
+  }, []);
 
-  const logout = () => {
-    setAuthState({
-      isAuthenticated: false,
-      token: null,
-      user: null,
-    });
-  };
+  const value = {
+    authState,
+    setAuthState,
+    authReady,
+  }
 
   return (
-    <AuthContext.Provider value={{ authState }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

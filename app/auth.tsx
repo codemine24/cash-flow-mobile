@@ -14,6 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Mail, ArrowLeft, ShieldCheck } from "lucide-react-native";
 import Toast from "react-native-toast-message";
 import { useSendOtp, useVerifyOtp } from "@/api/auth";
+import { useAuth } from "@/context/auth-context";
 
 // Two steps on the same screen:
 //   "email"  → user enters their email and taps "Send OTP"
@@ -29,6 +30,7 @@ export default function AuthScreen() {
 
   const sentOtpMutation = useSendOtp();
   const verifyOtpMutation = useVerifyOtp();
+  const { setAuthState } = useAuth();
 
   // Animated value for the content sliding between steps
   // Starts at 0 (visible), will slide left to -width on step change
@@ -60,8 +62,6 @@ export default function AuthScreen() {
 
     try {
       const response: any = await sentOtpMutation.mutateAsync(email);
-      console.log("Send OTP Response:", response);
-
       if (response?.success) {
         Toast.show({
           type: 'success',
@@ -89,6 +89,18 @@ export default function AuthScreen() {
         Toast.show({
           type: 'success',
           text1: response?.message || "Verified!",
+        });
+        setAuthState({
+          isAuthenticated: true,
+          user: {
+            id: response?.data?.id,
+            name: response?.data?.name,
+            email: response?.data?.email,
+            contact_number: response?.data?.contact_number,
+            role: response?.data?.role,
+            avatar: response?.data?.avatar,
+            status: response?.data?.status
+          },
         });
         router.replace("/(tabs)");
       } else {

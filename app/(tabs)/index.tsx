@@ -5,7 +5,7 @@ import { useState } from "react";
 import { CreateBookModal } from "@/components/create-book-modal";
 import { useColors } from "@/hooks/use-colors";
 import { calculateBookBalance, formatCurrency } from "@/lib/book-utils";
-import { useRouter, Link } from "expo-router";
+import { useRouter } from "expo-router";
 import { Plus } from "lucide-react-native";
 
 export default function HomeScreen() {

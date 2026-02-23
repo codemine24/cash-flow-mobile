@@ -1,4 +1,4 @@
-import { setAccessToken } from "@/lib/_core/auth";
+import { setAccessToken, setUserInfo } from "@/lib/_core/auth";
 import apiClient from "@/lib/api-client";
 import { useMutation } from "@tanstack/react-query";
 
@@ -32,6 +32,15 @@ export const useVerifyOtp = () => {
         },
         onSuccess: async (data: any) => {
             await setAccessToken(data?.data?.access_token);
+            await setUserInfo({
+                id: data?.data?.user?.id,
+                name: data?.data?.user?.name,
+                email: data?.data?.user?.email,
+                contact_number: data?.data?.user?.contact_number,
+                role: data?.data?.user?.role,
+                avatar: data?.data?.user?.avatar,
+                status: data?.data?.status,
+            });
         }
     });
 }

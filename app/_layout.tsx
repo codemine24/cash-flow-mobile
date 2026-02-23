@@ -20,6 +20,7 @@ import type { EdgeInsets, Metrics, Rect } from "react-native-safe-area-context";
 
 import { initManusRuntime, subscribeSafeAreaInsets } from "@/lib/_core/manus-runtime";
 import Toast from 'react-native-toast-message';
+import { AuthProvider } from "@/context/auth-context";
 
 const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 const DEFAULT_WEB_FRAME: Rect = { x: 0, y: 0, width: 0, height: 0 };
@@ -83,38 +84,40 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       {/* <trpc.Provider client={trpcClient} queryClient={queryClient}> */}
       <QueryClientProvider client={queryClient}>
-        <BookProvider>
-          <GoalProvider>
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                // Shared style for ALL screens that opt in to headerShown: true
-                headerBackTitle: "Back",
-                headerShadowVisible: false,
-                headerStyle: { backgroundColor: "transparent" },
-                headerTitleStyle: { fontSize: 17, fontWeight: "600" },
-              }}
-            >
-              <Stack.Screen name="index" />
-              <Stack.Screen name="auth" />
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="goal/[id]" options={{ headerShown: true }} />
-              <Stack.Screen name="book/[id]" options={{ headerShown: true }} />
-              <Stack.Screen name="settings/app-settings" options={{ headerShown: true }} />
-              <Stack.Screen name="settings/profile" options={{ headerShown: true }} />
-              <Stack.Screen name="settings/change-password" options={{ headerShown: true }} />
-              <Stack.Screen name="settings/about" options={{ headerShown: true }} />
-              <Stack.Screen name="settings/privacy-policy" options={{ headerShown: true }} />
-              <Stack.Screen name="settings/terms" options={{ headerShown: true }} />
-              <Stack.Screen name="settings/about-us" options={{ headerShown: true }} />
-              <Stack.Screen name="oauth/callback" />
+        <AuthProvider>
+          <BookProvider>
+            <GoalProvider>
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  // Shared style for ALL screens that opt in to headerShown: true
+                  headerBackTitle: "Back",
+                  headerShadowVisible: false,
+                  headerStyle: { backgroundColor: "transparent" },
+                  headerTitleStyle: { fontSize: 17, fontWeight: "600" },
+                }}
+              >
+                <Stack.Screen name="index" />
+                <Stack.Screen name="auth" />
+                <Stack.Screen name="(tabs)" />
+                <Stack.Screen name="goal/[id]" options={{ headerShown: true }} />
+                <Stack.Screen name="book/[id]" options={{ headerShown: true }} />
+                <Stack.Screen name="settings/app-settings" options={{ headerShown: true }} />
+                <Stack.Screen name="settings/profile" options={{ headerShown: true }} />
+                <Stack.Screen name="settings/change-password" options={{ headerShown: true }} />
+                <Stack.Screen name="settings/about" options={{ headerShown: true }} />
+                <Stack.Screen name="settings/privacy-policy" options={{ headerShown: true }} />
+                <Stack.Screen name="settings/terms" options={{ headerShown: true }} />
+                <Stack.Screen name="settings/about-us" options={{ headerShown: true }} />
+                <Stack.Screen name="oauth/callback" />
 
-            </Stack>
-            {/* Toast */}
-            <Toast />
-            <StatusBar style="auto" />
-          </GoalProvider>
-        </BookProvider>
+              </Stack>
+              {/* Toast */}
+              <Toast />
+              <StatusBar style="auto" />
+            </GoalProvider>
+          </BookProvider>
+        </AuthProvider>
       </QueryClientProvider>
       {/* </trpc.Provider> */}
     </GestureHandlerRootView>

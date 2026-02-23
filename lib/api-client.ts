@@ -1,5 +1,5 @@
 import axios from "axios";
-import { tokenStorage } from "./token-storage";
+import { getAccessToken, getRefreshToken, removeAccessToken, setAccessToken } from "./_core/auth";
 
 // Create Axios instance
 const apiClient = axios.create({
@@ -27,7 +27,7 @@ const addRefreshSubscriber = (callback: (token: string) => void) => {
 // Attach access token automatically
 apiClient.interceptors.request.use(
   async (config) => {
-    const token = await tokenStorage.getAccessToken();
+    const token = await getAccessToken();
     if (token) config.headers.Authorization = `Bearer ${token}`;
     return config;
   },
@@ -58,20 +58,20 @@ apiClient.interceptors.response.use(
         isRefreshing = true;
 
         try {
-          const refreshToken = await tokenStorage.getRefreshToken();
+          const refreshToken = await getRefreshToken();
           const response = await axios.post(
             `${process.env.EXPO_PUBLIC_SERVER_URL}/auth/refresh`,
             { refreshToken }
           );
 
           const { accessToken } = response.data;
-          await tokenStorage.setTokens(accessToken, refreshToken!);
+          await setAccessToken(accessToken);
 
           isRefreshing = false;
           onRefreshed(accessToken);
         } catch (err) {
           isRefreshing = false;
-          await tokenStorage.clearTokens();
+          await removeAccessToken();
           return Promise.reject(err);
         }
       }
