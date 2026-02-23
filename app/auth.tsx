@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Mail, ArrowLeft, ShieldCheck } from "lucide-react-native";
 import Toast from "react-native-toast-message";
@@ -30,14 +30,18 @@ export default function AuthScreen() {
 
   const sentOtpMutation = useSendOtp();
   const verifyOtpMutation = useVerifyOtp();
-  const { setAuthState } = useAuth();
+  const { setAuthState, authState } = useAuth();
 
   // Animated value for the content sliding between steps
   // Starts at 0 (visible), will slide left to -width on step change
   const slideAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
-  // --- Helpers ---
+  useEffect(() => {
+    if (authState.isAuthenticated) {
+      router.replace("/(tabs)");
+    }
+  }, [authState.isAuthenticated, router]);
 
   // Slide the current content out, then swap the step, then slide new content in
   const animateToStep = (nextStep: Step) => {

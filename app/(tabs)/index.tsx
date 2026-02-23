@@ -1,32 +1,32 @@
-import { ScrollView, Text, View, TouchableOpacity, FlatList, Alert } from "react-native";
+import { ScrollView, Text, View, TouchableOpacity, FlatList } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
-import { useBooks } from "@/lib/book-context";
 import { useState } from "react";
 import { CreateBookModal } from "@/components/create-book-modal";
 import { useColors } from "@/hooks/use-colors";
-import { calculateBookBalance, formatCurrency } from "@/lib/book-utils";
+import { formatCurrency } from "@/lib/book-utils";
 import { useRouter } from "expo-router";
 import { Plus } from "lucide-react-native";
+import { useBooks } from "@/api/books";
 
 export default function HomeScreen() {
   const colors = useColors();
   const router = useRouter();
-  const { state, deleteBook } = useBooks();
+  const { data: booksData, isLoading } = useBooks();
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   const handleDeleteBook = (bookId: string, bookName: string) => {
-    Alert.alert(
-      "Delete Book",
-      `Are you sure you want to delete "${bookName}"? This cannot be undone.`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          onPress: () => deleteBook(bookId),
-          style: "destructive",
-        },
-      ]
-    );
+    // Alert.alert(
+    //   "Delete Book",
+    //   `Are you sure you want to delete "${bookName}"? This cannot be undone.`,
+    //   [
+    //     { text: "Cancel", style: "cancel" },
+    //     {
+    //       text: "Delete",
+    //       onPress: () => deleteBook(bookId),
+    //       style: "destructive",
+    //     },
+    //   ]
+    // );
   };
 
   return (
@@ -40,11 +40,11 @@ export default function HomeScreen() {
           </View>
 
           {/* Books List */}
-          {state.isLoading ? (
+          {isLoading ? (
             <View className="bg-surface rounded-xl p-8 items-center justify-center border border-border">
               <Text className="text-muted">Loading...</Text>
             </View>
-          ) : state.books.length === 0 ? (
+          ) : booksData?.data?.length === 0 ? (
             <View className="bg-surface rounded-xl p-8 items-center justify-center border border-border">
               <Text className="text-lg font-semibold text-foreground mb-2">No books yet</Text>
               <Text className="text-sm text-muted text-center mb-4">
@@ -60,10 +60,9 @@ export default function HomeScreen() {
           ) : (
             <FlatList
               scrollEnabled={false}
-              data={state.books}
+              data={booksData?.data}
               keyExtractor={(item) => item.id}
               renderItem={({ item: book }) => {
-                const { totalIn, totalOut, balance } = calculateBookBalance(book);
                 return (
                   <TouchableOpacity
                     onPress={() => router.push({ pathname: "/book/[id]", params: { id: book.id } } as any)}
@@ -75,7 +74,7 @@ export default function HomeScreen() {
                         {book.name}
                       </Text>
                       <Text className="text-sm text-muted">
-                        {book.transactions.length} transaction{book.transactions.length !== 1 ? "s" : ""}
+                        {/* {book.transactions.length} transaction{book.transactions.length !== 1 ? "s" : ""} */}
                       </Text>
                     </View>
 
@@ -84,22 +83,22 @@ export default function HomeScreen() {
                       <View className="flex-1 bg-background rounded-lg p-3 border border-border">
                         <Text className="text-xs text-muted font-medium mb-1">In</Text>
                         <Text className="text-lg font-bold text-success">
-                          {formatCurrency(totalIn)}
+                          {formatCurrency(book.in)}
                         </Text>
                       </View>
                       <View className="flex-1 bg-background rounded-lg p-3 border border-border">
                         <Text className="text-xs text-muted font-medium mb-1">Out</Text>
                         <Text className="text-lg font-bold text-error">
-                          {formatCurrency(totalOut)}
+                          {formatCurrency(book.out)}
                         </Text>
                       </View>
                       <View className="flex-1 bg-background rounded-lg p-3 border border-border">
                         <Text className="text-xs text-muted font-medium mb-1">Balance</Text>
                         <Text
-                          className={`text-lg font-bold ${balance >= 0 ? "text-success" : "text-error"
+                          className={`text-lg font-bold ${book.balance >= 0 ? "text-success" : "text-error"
                             }`}
                         >
-                          {formatCurrency(balance)}
+                          {formatCurrency(book.balance)}
                         </Text>
                       </View>
                     </View>
