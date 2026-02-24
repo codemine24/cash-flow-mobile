@@ -1,21 +1,22 @@
+import { useBook } from "@/api/books";
+import { useDeleteTransaction } from "@/api/transaction";
 import { AddTransactionModal } from "@/components/add-transaction-modal";
 import { ScreenContainer } from "@/components/screen-container";
 
-import { useBooks } from "@/lib/book-context";
-import { calculateBookBalance, formatCurrency } from "@/lib/book-utils";
+import { formatCurrency } from "@/lib/book-utils";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 
 import { useState } from "react";
-import { Alert, FlatList, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { FlatList, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import Toast from "react-native-toast-message";
 
 export default function BookDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { state, deleteTransaction } = useBooks();
+  const { data: book } = useBook(id!);
+  const deleteTransaction = useDeleteTransaction()
   const [showAddModal, setShowAddModal] = useState(false);
-  const [defaultType, setDefaultType] = useState<"deposit" | "expense">("expense");
-
-  const book = state.books.find((b) => b.id === id);
+  const [defaultType, setDefaultType] = useState<"IN" | "OUT">("OUT");
 
   if (!book) {
     return (
@@ -28,46 +29,45 @@ export default function BookDetailScreen() {
     );
   }
 
-  const { totalIn, totalOut, balance } = calculateBookBalance(book);
+  const handleDeleteTransaction = async (transactionId: string) => {
+    const res: any = await deleteTransaction.mutateAsync([transactionId])
 
-  const handleDeleteTransaction = (transactionId: string) => {
-    Alert.alert(
-      "Delete Transaction",
-      "Are you sure you want to delete this transaction?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          onPress: () => deleteTransaction(book.id, transactionId),
-          style: "destructive",
-        },
-      ]
-    );
+    if (res?.success) {
+      Toast.show({
+        type: "success",
+        text1: "Transaction deleted successfully",
+      })
+    } else {
+      Toast.show({
+        type: "error",
+        text1: res?.message || "Failed to delete transaction",
+      })
+    }
   };
 
   return (
     <>
-      <Stack.Screen options={{ title: book.name, headerBackTitle: "Books" }} />
+      <Stack.Screen options={{ title: book.data.name, headerBackTitle: "Books" }} />
       <ScreenContainer className="p-4 bg-background">
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
           {/* Header Card */}
           <View className="bg-surface rounded-xl p-6 mb-6 border border-border">
-            <Text className="text-muted text-center mb-2 text-lg">Current Balance 2</Text>
+            <Text className="text-muted text-center mb-2 text-lg">Current Balance</Text>
             <Text
-              className={`text-4xl font-bold text-center mb-6 ${balance >= 0 ? "text-success" : "text-error"
+              className={`text-4xl font-bold text-center mb-6 ${book.data.balance >= 0 ? "text-success" : "text-error"
                 }`}
             >
-              {formatCurrency(balance)}
+              {formatCurrency(book.data.balance)}
             </Text>
 
             <View className="flex-row gap-4">
               <View className="flex-1 bg-background rounded-lg p-3 border border-border items-center">
                 <Text className="text-xs text-muted font-medium mb-1">Income</Text>
-                <Text className="text-lg font-bold text-success">{formatCurrency(totalIn)}</Text>
+                <Text className="text-lg font-bold text-success">{formatCurrency(book.data.in)}</Text>
               </View>
               <View className="flex-1 bg-background rounded-lg p-3 border border-border items-center">
                 <Text className="text-xs text-muted font-medium mb-1">Expenses</Text>
-                <Text className="text-lg font-bold text-error">{formatCurrency(totalOut)}</Text>
+                <Text className="text-lg font-bold text-error">{formatCurrency(book.data.out)}</Text>
               </View>
             </View>
           </View>
@@ -77,7 +77,7 @@ export default function BookDetailScreen() {
             <Text className="text-xl font-bold text-foreground">Transactions</Text>
           </View>
 
-          {book.transactions.length === 0 ? (
+          {book.data.transactions.length === 0 ? (
             <View className="bg-surface rounded-xl p-8 items-center justify-center border border-border">
               <Text className="text-lg font-semibold text-foreground mb-2">No transactions</Text>
               <Text className="text-sm text-muted text-center">
@@ -87,30 +87,32 @@ export default function BookDetailScreen() {
           ) : (
             <FlatList
               scrollEnabled={false}
-              data={[...book.transactions].reverse()} // Show newest first
+              data={[...book.data.transactions].reverse()} // Show newest first
               keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  onLongPress={() => handleDeleteTransaction(item.id)}
-                  className="bg-surface rounded-xl p-4 mb-3 border border-border flex-row items-center justify-between active:opacity-70"
-                >
-                  <View className="flex-1 mr-4">
-                    <Text className="text-base font-semibold text-foreground" numberOfLines={1}>
-                      {item.description || item.category}
-                    </Text>
-                    <Text className="text-xs text-muted mt-1">
-                      {new Date(item.date).toLocaleDateString()} • {item.category}
-                    </Text>
-                  </View>
-                  <Text
-                    className={`text-lg font-bold ${item.type === "deposit" ? "text-success" : "text-error"
-                      }`}
+              renderItem={({ item }) => {
+                return (
+                  <TouchableOpacity
+                    onLongPress={() => handleDeleteTransaction(item.id)}
+                    className="bg-surface rounded-xl p-4 mb-3 border border-border flex-row items-center justify-between active:opacity-70"
                   >
-                    {item.type === "deposit" ? "+" : "-"}
-                    {formatCurrency(item.amount)}
-                  </Text>
-                </TouchableOpacity>
-              )}
+                    <View className="flex-1 mr-4">
+                      <Text className="text-base font-semibold text-foreground" numberOfLines={1}>
+                        {item.remark || item.category}
+                      </Text>
+                      <Text className="text-xs text-muted mt-1">
+                        {new Date(item.created_at).toLocaleDateString()} • {item.category}
+                      </Text>
+                    </View>
+                    <Text
+                      className={`text-lg font-bold ${item.type === "IN" ? "text-success" : "text-error"
+                        }`}
+                    >
+                      {item.type === "IN" ? "+" : "-"}
+                      {formatCurrency(item.amount)}
+                    </Text>
+                  </TouchableOpacity>
+                )
+              }}
             />
           )}
         </ScrollView>
@@ -137,7 +139,7 @@ export default function BookDetailScreen() {
       }}>
         <TouchableOpacity
           onPress={() => {
-            setDefaultType("deposit");
+            setDefaultType("IN");
             setShowAddModal(true);
           }}
           style={{
@@ -154,7 +156,7 @@ export default function BookDetailScreen() {
 
         <TouchableOpacity
           onPress={() => {
-            setDefaultType("expense");
+            setDefaultType("OUT");
             setShowAddModal(true);
           }}
           style={{
@@ -173,7 +175,7 @@ export default function BookDetailScreen() {
       <AddTransactionModal
         visible={showAddModal}
         onClose={() => setShowAddModal(false)}
-        bookId={book.id}
+        bookId={book.data.id}
         initialType={defaultType}
       />
     </>

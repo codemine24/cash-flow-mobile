@@ -1,5 +1,5 @@
 import apiClient from "@/lib/api-client";
-import { QueryClient, useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 const BOOK_API_URL = "/book";
 const keys = {
@@ -33,11 +33,12 @@ export const useBook = (id: string) => {
         console.log(error);
       }
     },
+    enabled: !!id,
   });
 };
 
 export const useCreateBook = () => {
-  const queryClient = new QueryClient();
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (name: string) => {
       try {
@@ -47,14 +48,12 @@ export const useCreateBook = () => {
         console.log(error);
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keys.list() });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.all }),
   });
 };
 
 export const useUpdateBook = () => {
-  const queryClient = new QueryClient();
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, name }: { id: string, name: string }) => {
       try {
@@ -64,9 +63,21 @@ export const useUpdateBook = () => {
         console.log(error);
       }
     },
-    onSuccess: (_, data: any) => {
-      queryClient.invalidateQueries({ queryKey: keys.list() });
-      queryClient.invalidateQueries({ queryKey: keys.detail(data?.data?.id) });
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.all }),
+  });
+};
+
+export const useDeleteBook = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      try {
+        const response = await apiClient.delete(`${BOOK_API_URL}/${id}`);
+        return response;
+      } catch (error) {
+        console.log(error);
+      }
     },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.all }),
   });
 };

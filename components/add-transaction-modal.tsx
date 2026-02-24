@@ -13,12 +13,14 @@ import {
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useBooks } from "@/lib/book-context";
 import { Calendar, X } from "lucide-react-native";
+import { useCreateTransaction } from "@/api/transaction";
+import Toast from "react-native-toast-message";
 
 interface AddTransactionModalProps {
   visible: boolean;
   bookId: string;
   onClose: () => void;
-  initialType?: "deposit" | "expense";
+  initialType?: "IN" | "OUT";
 }
 
 const EXPENSE_CATEGORIES = [
@@ -31,39 +33,38 @@ export function AddTransactionModal({
   visible,
   bookId,
   onClose,
-  initialType = "expense",
+  initialType = "OUT",
 }: AddTransactionModalProps) {
-  const { addTransaction } = useBooks();
+  const createTransactionMutation = useCreateTransaction();
 
-  const [type, setType] = useState<"deposit" | "expense">(initialType);
+  const [type, setType] = useState<"IN" | "OUT">(initialType);
   const [amount, setAmount] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("other");
-  const [description, setDescription] = useState("");
-  const [date, setDate] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [remark, setRemark] = useState("");
+  // const [date, setDate] = useState(new Date());
+  // const [showDatePicker, setShowDatePicker] = useState(false);
 
   useEffect(() => {
     if (visible) {
       setType(initialType);
       setAmount("");
       setSelectedCategory("other");
-      setDescription("");
-      setDate(new Date());
+      setRemark("");
+      // setDate(new Date());  
     }
   }, [visible, initialType]);
 
-  const isDeposit = type === "deposit";
+  const isDeposit = type === "IN";
   const accentColor = isDeposit ? "#2E7D32" : "#C62828";
 
-  const handleDateChange = (event: any, selectedDate?: Date) => {
-    if (Platform.OS === "android") {
-      setShowDatePicker(false);
-    }
-    if (event.type === "set" && selectedDate) {
-      setDate(selectedDate);
-    }
-  };
+  // const handleDateChange = (event: any, selectedDate?: Date) => {
+  //   if (Platform.OS === "android") {
+  //     setShowDatePicker(false);
+  //   }
+  //   if (event.type === "set" && selectedDate) {
+  //     setDate(selectedDate);
+  //   }
+  // };
 
   const handleAddTransaction = async () => {
     if (!amount || parseFloat(amount) <= 0) {
@@ -76,26 +77,32 @@ export function AddTransactionModal({
       return;
     }
 
-    setIsSubmitting(true);
-    try {
-      await addTransaction(bookId, {
-        type,
-        amount: parseFloat(amount),
-        category: isDeposit ? "deposit" : selectedCategory,
-        description,
-        date: date.toISOString().split("T")[0],
-      });
+    const response: any = await createTransactionMutation.mutateAsync({
+      book_id: bookId,
+      type,
+      amount: parseFloat(amount),
+      category_id: !isDeposit ? selectedCategory : undefined,
+      remark,
+      // date: date.toISOString().split("T")[0],
+    });
 
+    if (response.success) {
       setAmount("");
       setSelectedCategory("other");
-      setDescription("");
-      setDate(new Date());
+      setRemark("");
+      // setDate(new Date());
       onClose();
-    } catch (error) {
-      console.error("Failed to add transaction:", error);
-      Alert.alert("Error", "Failed to add transaction");
-    } finally {
-      setIsSubmitting(false);
+      Toast.show({
+        type: "success",
+        text1: "Success",
+        text2: response.message,
+      });
+    } else {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: response.message,
+      });
     }
   };
 
@@ -167,7 +174,7 @@ export function AddTransactionModal({
               </View>
             )}
 
-            <View style={styles.inputGroup}>
+            {/* <View style={styles.inputGroup}>
               <Text style={styles.label}>Date</Text>
               <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.datePickerButton} activeOpacity={0.7}>
                 <Calendar size={20} color="#71717A" />
@@ -191,13 +198,13 @@ export function AddTransactionModal({
                   )}
                 </View>
               )}
-            </View>
+            </View> */}
 
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Remark</Text>
               <TextInput
-                value={description}
-                onChangeText={setDescription}
+                value={remark}
+                onChangeText={setRemark}
                 placeholder={isDeposit ? "e.g., Salary, Business income..." : "e.g., Lunch, Uber ride..."}
                 placeholderTextColor="#A1A1AA"
                 style={styles.remarkInput}
@@ -208,12 +215,12 @@ export function AddTransactionModal({
 
             <TouchableOpacity
               onPress={handleAddTransaction}
-              disabled={isSubmitting}
-              style={[styles.submitButton, { backgroundColor: isSubmitting ? accentColor + "80" : accentColor }]}
+              disabled={createTransactionMutation.isPending}
+              style={[styles.submitButton, { backgroundColor: createTransactionMutation.isPending ? accentColor + "80" : accentColor }]}
               activeOpacity={0.8}
             >
               <Text style={styles.submitButtonText}>
-                {isSubmitting ? "SAVING..." : isDeposit ? "ADD CASH IN" : "ADD CASH OUT"}
+                {createTransactionMutation.isPending ? "SAVING..." : isDeposit ? "ADD CASH IN" : "ADD CASH OUT"}
               </Text>
             </TouchableOpacity>
           </ScrollView>
