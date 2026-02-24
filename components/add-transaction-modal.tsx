@@ -81,12 +81,12 @@ export function AddTransactionModal({
       book_id: bookId,
       type,
       amount: parseFloat(amount),
-      category_id: !isDeposit ? selectedCategory : undefined,
+      category_id: !isDeposit ? selectedCategory === "other" ? undefined : selectedCategory : undefined,
       remark,
       // date: date.toISOString().split("T")[0],
     });
 
-    if (response.success) {
+    if (response?.success) {
       setAmount("");
       setSelectedCategory("other");
       setRemark("");
@@ -95,7 +95,7 @@ export function AddTransactionModal({
       Toast.show({
         type: "success",
         text1: "Success",
-        text2: response.message,
+        text2: response?.message,
       });
     } else {
       Toast.show({
