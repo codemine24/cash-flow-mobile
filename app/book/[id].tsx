@@ -171,7 +171,7 @@ export default function BookDetailScreen() {
 
         {/* Transactions List */}
         {book?.data?.transactions?.length === 0 ? (
-          <View className="mx-4 bg-white rounded-xl p-8 items-center justify-center border border-gray-100">
+          <View className="mx-4 bg-white rounded-xl p-8 items-center justify-center border border-border">
             <Text className="text-lg font-semibold text-gray-900 mb-2">
               No transactions
             </Text>
@@ -184,7 +184,7 @@ export default function BookDetailScreen() {
             {groupedTransactions.map((group) => (
               <View key={group.date}>
                 {/* Date Header: Full width */}
-                <View className="bg-[#f0f0f0] py-2 px-4 border-y border-gray-200">
+                <View className="bg-[#f0f0f0] py-2 px-4">
                   <Text className="text-gray-500 text-[13px] font-bold tracking-wide">
                     {group.date}
                   </Text>
@@ -194,7 +194,7 @@ export default function BookDetailScreen() {
                 {group.data.map((item, index) => (
                   <View
                     key={item.id}
-                    className={`px-4 py-4 flex-row justify-between bg-white ${index !== group.data.length - 1 ? "border-b border-gray-100" : ""
+                    className={`rounded-2xl mt-2 px-4 py-4 flex-row justify-between bg-white ${index !== group.data.length - 1 ? "border-b border-border" : ""
                       }`}
                   >
                     <View className="flex-1 mr-2 ">
@@ -224,7 +224,7 @@ export default function BookDetailScreen() {
                       >
                         {formatCurrency(item.amount)}
                       </Text>
-                      <Text className="text-sm text-gray-500">
+                      <Text className="text-sm text-gray-500 mb-1">
                         Balance: {formatCurrency(item.runningBalance)}
                       </Text>
                       {/* 3-Dot Menu */}
@@ -244,7 +244,7 @@ export default function BookDetailScreen() {
                       >
                         <View>
                           <TouchableOpacity
-                            className="flex-row items-center px-4 py-3 border-b border-gray-100"
+                            className="flex-row items-center px-4 py-3 border-b border-border"
                             onPress={() => handleEditTransaction(item)}
                           >
                             <Edit3 size={18} color="#374151" />
