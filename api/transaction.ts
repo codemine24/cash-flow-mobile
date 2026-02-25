@@ -57,8 +57,8 @@ export const useCreateTransaction = () => {
             }
         },
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: keys.all });
-          queryClient.invalidateQueries({ queryKey: ["books"] });
+            queryClient.invalidateQueries({ queryKey: keys.all });
+            queryClient.invalidateQueries({ queryKey: ["books"] });
         },
     });
 };
@@ -68,15 +68,16 @@ export const useUpdateTransaction = () => {
     return useMutation({
         mutationFn: async ({ id, transaction }: { id: string, transaction: any }) => {
             try {
-                const response = await apiClient.put(`${TRANSACTION_API_URL}/${id}`, transaction);
+                const response = await apiClient.patch(`${TRANSACTION_API_URL}/${id}`, transaction);
                 return response;
             } catch (error) {
                 console.log(error);
+                throw error;
             }
         },
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: keys.all });
-          queryClient.invalidateQueries({ queryKey: ["books"] });
+            queryClient.invalidateQueries({ queryKey: keys.all });
+            queryClient.invalidateQueries({ queryKey: ["books"] });
         },
     });
 };
@@ -86,15 +87,15 @@ export const useDeleteTransaction = () => {
     return useMutation({
         mutationFn: async (ids: string[]) => {
             try {
-                const response = await apiClient.delete(TRANSACTION_API_URL, { data: { ids} });
+                const response = await apiClient.delete(TRANSACTION_API_URL, { data: { ids } });
                 return response;
             } catch (error) {
                 console.log(error);
             }
         },
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: keys.all });
-          queryClient.invalidateQueries({ queryKey: ["books"] });
+            queryClient.invalidateQueries({ queryKey: keys.all });
+            queryClient.invalidateQueries({ queryKey: ["books"] });
         },
     });
 };

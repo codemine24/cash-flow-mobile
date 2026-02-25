@@ -8,12 +8,15 @@ import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 
 import { useMemo, useState } from "react";
 import {
+  Alert,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
 import Toast from "react-native-toast-message";
+import Popover from 'react-native-popover-view';
+import { MoreVertical, Edit3, Trash2, MoreHorizontal } from "lucide-react-native";
 
 export default function BookDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -22,6 +25,8 @@ export default function BookDetailScreen() {
   const deleteTransaction = useDeleteTransaction();
   const [showAddModal, setShowAddModal] = useState(false);
   const [defaultType, setDefaultType] = useState<"IN" | "OUT">("OUT");
+  const [editingTransaction, setEditingTransaction] = useState<any>(null);
+  const [activeMenuTransaction, setActiveMenuTransaction] = useState<string | null>(null);
 
   console.log("book.......", JSON.stringify(book?.data, null, 2));
 
@@ -82,19 +87,42 @@ export default function BookDetailScreen() {
   }
 
   const handleDeleteTransaction = async (transactionId: string) => {
-    const res: any = await deleteTransaction.mutateAsync([transactionId]);
+    setActiveMenuTransaction(null);
+    Alert.alert(
+      "Delete Transaction",
+      "Are you sure you want to delete this transaction?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            const res: any = await deleteTransaction.mutateAsync([transactionId]);
 
-    if (res?.success) {
-      Toast.show({
-        type: "success",
-        text1: "Transaction deleted successfully",
-      });
-    } else {
-      Toast.show({
-        type: "error",
-        text1: res?.message || "Failed to delete transaction",
-      });
-    }
+            if (res?.success) {
+              Toast.show({
+                type: "success",
+                text1: "Transaction deleted successfully",
+              });
+            } else {
+              Toast.show({
+                type: "error",
+                text1: res?.message || "Failed to delete transaction",
+              });
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleEditTransaction = (item: any) => {
+    setActiveMenuTransaction(null);
+    setEditingTransaction(item);
+    setShowAddModal(true);
   };
 
   return (
@@ -109,7 +137,7 @@ export default function BookDetailScreen() {
         className="px-4"
       >
         {/* Header Card */}
-        <View className="bg-white mt-4 rounded mb-6 shadow-sm border border-border ">
+        <View className="bg-white mt-4 rounded-2xl mb-6 shadow-sm border border-border">
           <View className="px-4 py-4 flex-row justify-between items-center border-b border-border">
             <Text className="text-gray-900 font-bold text-[15px]">Net Balance</Text>
             <Text className="text-gray-900 font-bold text-[15px]">
@@ -133,7 +161,7 @@ export default function BookDetailScreen() {
         </View>
 
         {/* Showing X entries */}
-        <View className="flex-row items-center justify-center mb-5 px-6">
+        <View className="flex-row items-center justify-center mb-5 px-6 rounded-2xl">
           <View className="flex-1 h-[1px] bg-gray-200" />
           <Text className="text-gray-500 font-medium text-[11px] mx-4 tracking-wide">
             Showing {book?.data?.transactions?.length} entries
@@ -164,20 +192,20 @@ export default function BookDetailScreen() {
 
                 {/* Transactions */}
                 {group.data.map((item, index) => (
-                  <TouchableOpacity
+                  <View
                     key={item.id}
-                    onLongPress={() => handleDeleteTransaction(item.id)}
-                    delayLongPress={200}
-                    activeOpacity={0.7}
                     className={`px-4 py-4 flex-row justify-between bg-white ${index !== group.data.length - 1 ? "border-b border-gray-100" : ""
                       }`}
                   >
-                    <View className="flex-1 mr-2">
-                      <View className="bg-[#E6F3FF] self-start px-2 py-[2px] rounded mb-2">
-                        <Text className="text-primary text-[11px] font-bold uppercase tracking-wider">
-                          {item.category || "Cash in"}
-                        </Text>
+                    <View className="flex-1 mr-2 ">
+                      <View className="flex-row items-center justify-between mb-2">
+                        <View className="bg-[#E6F3FF] px-2 py-[2px] rounded">
+                          <Text className="text-primary text-[11px] font-bold uppercase tracking-wider">
+                            {item.category || "Cash in"}
+                          </Text>
+                        </View>
                       </View>
+
                       <Text className="text-sm mb-2 font-medium">
                         {item.remark || item.category || "No remark"}
                       </Text>
@@ -189,7 +217,7 @@ export default function BookDetailScreen() {
                         }).toLowerCase()}
                       </Text>
                     </View>
-                    <View className="items-end pt-1">
+                    <View className="items-end ">
                       <Text
                         className={`text-sm font-bold mb-1 ${item.type === "IN" ? "text-[#2E7D32]" : "text-[#C62828]"
                           }`}
@@ -199,8 +227,41 @@ export default function BookDetailScreen() {
                       <Text className="text-sm text-gray-500">
                         Balance: {formatCurrency(item.runningBalance)}
                       </Text>
+                      {/* 3-Dot Menu */}
+                      <Popover
+                        isVisible={activeMenuTransaction === item.id}
+                        onRequestClose={() => setActiveMenuTransaction(null)}
+                        from={(
+                          <TouchableOpacity
+                            onPress={() => setActiveMenuTransaction(item.id)}
+                            className="p-1 items-center justify-center -mr-1"
+                          >
+                            <MoreHorizontal size={18} color="#9CA3AF" />
+                          </TouchableOpacity>
+                        )}
+                        backgroundStyle={{ backgroundColor: 'rgba(0, 0, 0, 0.4)' }}
+                        popoverStyle={{ borderRadius: 12, padding: 4, width: 160, backgroundColor: 'white' }}
+                      >
+                        <View>
+                          <TouchableOpacity
+                            className="flex-row items-center px-4 py-3 border-b border-gray-100"
+                            onPress={() => handleEditTransaction(item)}
+                          >
+                            <Edit3 size={18} color="#374151" />
+                            <Text className="text-gray-700 ml-3 font-medium">Edit</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            className="flex-row items-center px-4 py-3"
+                            onPress={() => handleDeleteTransaction(item.id)}
+                          >
+                            <Trash2 size={18} color="#EF4444" />
+                            <Text className="text-red-500 ml-3 font-medium">Delete</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </Popover>
                     </View>
-                  </TouchableOpacity>
+
+                  </View>
                 ))}
               </View>
             ))}
@@ -234,11 +295,11 @@ export default function BookDetailScreen() {
             setDefaultType("IN");
             setShowAddModal(true);
           }}
+          className="rounded-2xl"
           style={{
             flex: 1,
             backgroundColor: "#2E7D32",
             paddingVertical: 14,
-            borderRadius: 8,
             alignItems: "center",
             justifyContent: "center",
           }}
@@ -260,11 +321,11 @@ export default function BookDetailScreen() {
             setDefaultType("OUT");
             setShowAddModal(true);
           }}
+          className="rounded-2xl"
           style={{
             flex: 1,
             backgroundColor: "#C62828",
             paddingVertical: 14,
-            borderRadius: 8,
             alignItems: "center",
             justifyContent: "center",
           }}
@@ -284,9 +345,13 @@ export default function BookDetailScreen() {
 
       <AddTransactionModal
         visible={showAddModal}
-        onClose={() => setShowAddModal(false)}
+        onClose={() => {
+          setShowAddModal(false);
+          setEditingTransaction(null);
+        }}
         bookId={book.data.id}
         initialType={defaultType}
+        editTransaction={editingTransaction}
       />
     </>
   );
