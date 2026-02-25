@@ -10,7 +10,7 @@ import {
   StyleSheet,
 } from "react-native";
 import { X } from "lucide-react-native";
-import { useCreateTransaction } from "@/api/transaction";
+import { useCreateTransaction, useUpdateTransaction } from "@/api/transaction";
 import Toast from "react-native-toast-message";
 
 interface AddTransactionModalProps {
@@ -18,6 +18,7 @@ interface AddTransactionModalProps {
   bookId: string;
   onClose: () => void;
   initialType?: "IN" | "OUT";
+  editTransaction?: any; // The transaction to edit, if any
 }
 
 const EXPENSE_CATEGORIES = [
@@ -31,8 +32,10 @@ export function AddTransactionModal({
   bookId,
   onClose,
   initialType = "OUT",
+  editTransaction,
 }: AddTransactionModalProps) {
   const createTransactionMutation = useCreateTransaction();
+  const updateTransactionMutation = useUpdateTransaction();
 
   const [type, setType] = useState<"IN" | "OUT">(initialType);
   const [amount, setAmount] = useState("");
@@ -43,13 +46,20 @@ export function AddTransactionModal({
 
   useEffect(() => {
     if (visible) {
-      setType(initialType);
-      setAmount("");
-      setSelectedCategory("other");
-      setRemark("");
+      if (editTransaction) {
+        setType(editTransaction.type);
+        setAmount(editTransaction.amount ? editTransaction.amount.toString() : "");
+        setSelectedCategory(editTransaction.category_id || "other");
+        setRemark(editTransaction.remark || "");
+      } else {
+        setType(initialType);
+        setAmount("");
+        setSelectedCategory("other");
+        setRemark("");
+      }
       // setDate(new Date());
     }
-  }, [visible, initialType]);
+  }, [visible, initialType, editTransaction]);
 
   const isDeposit = type === "IN";
   const accentColor = isDeposit ? "#2E7D32" : "#C62828";
@@ -74,7 +84,7 @@ export function AddTransactionModal({
       return;
     }
 
-    const response: any = await createTransactionMutation.mutateAsync({
+    const payload = {
       book_id: bookId,
       type,
       amount: parseFloat(amount),
@@ -85,27 +95,47 @@ export function AddTransactionModal({
         : undefined,
       remark,
       // date: date.toISOString().split("T")[0],
-    });
+    };
 
-    if (response?.success) {
-      setAmount("");
-      setSelectedCategory("other");
-      setRemark("");
-      // setDate(new Date());
-      onClose();
-      Toast.show({
-        type: "success",
-        text1: "Success",
-        text2: response?.message,
-      });
-    } else {
+    let response: any;
+    try {
+      if (editTransaction) {
+        response = await updateTransactionMutation.mutateAsync({
+          id: editTransaction.id,
+          transaction: payload,
+        });
+      } else {
+        response = await createTransactionMutation.mutateAsync(payload);
+      }
+
+      if (response?.success) {
+        setAmount("");
+        setSelectedCategory("other");
+        setRemark("");
+        // setDate(new Date());
+        onClose();
+        Toast.show({
+          type: "success",
+          text1: "Success",
+          text2: response?.message,
+        });
+      } else {
+        Toast.show({
+          type: "error",
+          text1: "Error",
+          text2: response?.message || "Something went wrong",
+        });
+      }
+    } catch (e: any) {
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: response.message,
+        text2: e?.message || "Failed to save transaction",
       });
     }
   };
+
+  const isPending = createTransactionMutation.isPending || updateTransactionMutation.isPending;
 
   // const formatDisplayDate = (d: Date) => {
   //   return d.toLocaleDateString("en-US", {
@@ -135,7 +165,7 @@ export function AddTransactionModal({
           >
             <View style={styles.header}>
               <Text style={styles.title}>
-                {isDeposit ? "Cash In" : "Cash Out"}
+                {editTransaction ? "Edit Transaction" : isDeposit ? "Cash In" : "Cash Out"}
               </Text>
               <TouchableOpacity onPress={onClose} style={styles.closeButton}>
                 <X size={20} color="#71717A" />
@@ -248,11 +278,11 @@ export function AddTransactionModal({
 
             <TouchableOpacity
               onPress={handleAddTransaction}
-              disabled={createTransactionMutation.isPending}
+              disabled={isPending}
               style={[
                 styles.submitButton,
                 {
-                  backgroundColor: createTransactionMutation.isPending
+                  backgroundColor: isPending
                     ? accentColor + "80"
                     : accentColor,
                 },
@@ -260,11 +290,13 @@ export function AddTransactionModal({
               activeOpacity={0.8}
             >
               <Text style={styles.submitButtonText}>
-                {createTransactionMutation.isPending
+                {isPending
                   ? "SAVING..."
-                  : isDeposit
-                    ? "ADD CASH IN"
-                    : "ADD CASH OUT"}
+                  : editTransaction
+                    ? "SAVE CHANGES"
+                    : isDeposit
+                      ? "ADD CASH IN"
+                      : "ADD CASH OUT"}
               </Text>
             </TouchableOpacity>
           </ScrollView>

@@ -1,42 +1,46 @@
-import { ScrollView, Text, View, TouchableOpacity, FlatList } from "react-native";
-import { ScreenContainer } from "@/components/screen-container";
-import { useState } from "react";
-import { CreateBookModal } from "@/components/create-book-modal";
-import { useColors } from "@/hooks/use-colors";
-import { formatCurrency } from "@/lib/book-utils";
-import { useRouter } from "expo-router";
-import { Plus } from "lucide-react-native";
 import { useBooks } from "@/api/books";
+import { CreateWalletModal } from "@/components/create-wallet-modal";
+import { ScreenContainer } from "@/components/screen-container";
+import { formatCurrency, formatUpdateDate } from "@/lib/book-utils";
+import { useRouter } from "expo-router";
+import { Book, CornerDownRight, Edit3, MoreVertical, Trash2, UserPlus } from "lucide-react-native";
+import { useState } from "react";
+import { FlatList, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import Popover from 'react-native-popover-view';
+// import { ScreenContainer } from "react-native-screens";
 
 export default function HomeScreen() {
-  const colors = useColors();
   const router = useRouter();
   const { data: booksData, isLoading } = useBooks();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [activeMenuBook, setActiveMenuBook] = useState<{ id: string; name: string } | null>(null);
+  const [editingBook, setEditingBook] = useState<{ id: string; name: string } | null>(null);
 
   const handleDeleteBook = (bookId: string, bookName: string) => {
-    // Alert.alert(
-    //   "Delete Book",
-    //   `Are you sure you want to delete "${bookName}"? This cannot be undone.`,
-    //   [
-    //     { text: "Cancel", style: "cancel" },
-    //     {
-    //       text: "Delete",
-    //       onPress: () => deleteBook(bookId),
-    //       style: "destructive",
-    //     },
-    //   ]
-    // );
+    // Add real delete logic here later
+    setActiveMenuBook(null);
+  };
+
+  const handleRename = () => {
+    if (activeMenuBook) {
+      setEditingBook(activeMenuBook);
+      setShowCreateModal(true);
+    }
+    setActiveMenuBook(null);
+  };
+
+  const handleAddMember = () => {
+    setActiveMenuBook(null);
   };
 
   return (
     <>
       <ScreenContainer className="p-4 bg-background">
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
+        <ScrollView showsVerticalScrollIndicator={false}>
           {/* Header */}
           <View className="mb-6">
-            <Text className="text-3xl font-bold text-foreground">Books</Text>
-            <Text className="text-sm text-muted mt-1">Manage your expense books</Text>
+            <Text className="text-3xl font-bold text-foreground">Wallets</Text>
+            <Text className="text-sm text-muted mt-1">Create separate wallets to organize your expenses</Text>
           </View>
 
           {/* Books List */}
@@ -46,15 +50,15 @@ export default function HomeScreen() {
             </View>
           ) : booksData?.data?.length === 0 ? (
             <View className="bg-surface rounded-xl p-8 items-center justify-center border border-border">
-              <Text className="text-lg font-semibold text-foreground mb-2">No books yet</Text>
+              <Text className="text-lg font-semibold text-foreground mb-2">No wallets yet</Text>
               <Text className="text-sm text-muted text-center mb-4">
-                Create your first book to start tracking expenses
+                Create your first wallet to start tracking expenses
               </Text>
               <TouchableOpacity
                 onPress={() => setShowCreateModal(true)}
                 className="bg-primary rounded-lg px-6 py-2"
               >
-                <Text className="text-white font-semibold">Create Book</Text>
+                <Text className="text-white font-semibold">Create Wallet</Text>
               </TouchableOpacity>
             </View>
           ) : (
@@ -66,46 +70,101 @@ export default function HomeScreen() {
                 return (
                   <TouchableOpacity
                     onPress={() => router.push({ pathname: "/book/[id]", params: { id: book.id } } as any)}
-                    onLongPress={() => handleDeleteBook(book.id, book.name)}
-                    className="bg-surface rounded-xl p-4 mb-4 border border-border active:opacity-70"
+                    className="bg-surface rounded-2xl p-4 mt-4 border border-border active:opacity-70 flex-row items-center justify-between"
                   >
-                    <View className="flex-row items-center justify-between mb-3">
-                      <Text className="text-lg font-bold text-foreground flex-1">
-                        {book.name}
-                      </Text>
-                      <Text className="text-sm text-muted">
-                        {/* {book.transactions.length} transaction{book.transactions.length !== 1 ? "s" : ""} */}
-                      </Text>
-                    </View>
-
-                    {/* Balance Summary */}
-                    <View className="flex-row gap-3">
-                      <View className="flex-1 bg-background rounded-lg p-3 border border-border">
-                        <Text className="text-xs text-muted font-medium mb-1">In</Text>
-                        <Text className="text-lg font-bold text-success">
-                          {formatCurrency(book.in)}
-                        </Text>
+                    {/* Left: Icon and Name/Date */}
+                    <View className="flex-row items-center flex-1">
+                      <View
+                        style={{
+                          width: 52,
+                          height: 52,
+                          borderRadius: 14,
+                          backgroundColor: "rgba(0, 146, 154, 0.1)",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          marginRight: 16,
+                        }}
+                      >
+                        <Book size={26} color="#00929A" />
                       </View>
-                      <View className="flex-1 bg-background rounded-lg p-3 border border-border">
-                        <Text className="text-xs text-muted font-medium mb-1">Out</Text>
-                        <Text className="text-lg font-bold text-error">
-                          {formatCurrency(book.out)}
+                      <View className="flex-1 mr-4">
+                        <Text className="text-gray-900 font-bold text-[15px]" numberOfLines={1}>
+                          {book.name}
                         </Text>
-                      </View>
-                      <View className="flex-1 bg-background rounded-lg p-3 border border-border">
-                        <Text className="text-xs text-muted font-medium mb-1">Balance</Text>
-                        <Text
-                          className={`text-lg font-bold ${book.balance >= 0 ? "text-success" : "text-error"
-                            }`}
-                        >
-                          {formatCurrency(book.balance)}
+                        <Text className="text-sm text-muted mt-0.5">
+                          {formatUpdateDate(book.updated_at)}
                         </Text>
                       </View>
                     </View>
 
-                    <Text className="text-xs text-muted mt-3">
-                      Long press to delete
-                    </Text>
+                    {/* Right: Amount and Options Menu */}
+                    <View className="flex-row items-center">
+                      <Text
+                        className={`text-sm font-semibold mr-1 ${book.balance > 0 ? "text-[#2E7D32]" : "text-[#C62828]"}`}
+                      >
+                        {formatCurrency(book.balance)}
+                      </Text>
+
+                      <Popover
+                        isVisible={activeMenuBook?.id === book.id}
+                        onRequestClose={() => setActiveMenuBook(null)}
+                        from={(
+                          <TouchableOpacity
+                            onPress={() => setActiveMenuBook({ id: book.id, name: book.name })}
+                            className="py-2 pl-2 rounded-full"
+                          >
+                            <MoreVertical size={20} color="#6b7280" />
+                          </TouchableOpacity>
+                        )}
+                        popoverStyle={{
+                          borderRadius: 8,
+                          backgroundColor: '#ffffff',
+                          paddingVertical: 12,
+                          paddingHorizontal: 16,
+                          width: 220,
+                          elevation: 0,
+                          shadowOpacity: 0,
+                          shadowRadius: 0,
+                          borderColor: '#e5e7eb',
+                          // borderWidth: 1,
+                        }}
+                        backgroundStyle={{ backgroundColor: 'transparent' }}
+                      >
+                        <View className="bg-white flex flex-col gap-4">
+                          <TouchableOpacity
+                            onPress={handleRename}
+                            className="flex-row items-center"
+                          >
+                            <Edit3 size={20} color="#6b7280" />
+                            <Text className="ml-4 text-[16px] text-[#111827]">Rename</Text>
+                          </TouchableOpacity>
+
+                          <TouchableOpacity
+                            onPress={handleAddMember}
+                            className="flex-row items-center"
+                          >
+                            <UserPlus size={20} color="#6b7280" />
+                            <Text className="ml-4 text-[16px] text-[#111827]">Add Members</Text>
+                          </TouchableOpacity>
+
+                          <TouchableOpacity
+                            onPress={() => { }}
+                            className="flex-row items-center"
+                          >
+                            <CornerDownRight size={20} color="#ef4444" />
+                            <Text className="ml-4 text-[16px] text-red-500">Move book</Text>
+                          </TouchableOpacity>
+
+                          <TouchableOpacity
+                            onPress={() => handleDeleteBook(book.id, book.name)}
+                            className="flex-row items-center mt-1"
+                          >
+                            <Trash2 size={20} color="#ef4444" />
+                            <Text className="ml-4 text-[16px] text-red-500">Delete Book</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </Popover>
+                    </View>
                   </TouchableOpacity>
                 );
               }}
@@ -115,22 +174,32 @@ export default function HomeScreen() {
       </ScreenContainer>
 
       {/* Floating Action Button */}
-      <TouchableOpacity
-        onPress={() => setShowCreateModal(true)}
-        className="absolute bottom-10 right-6 w-16 h-16 bg-primary rounded-full items-center justify-center shadow-lg"
+      <View
         style={{
-          shadowColor: colors.primary,
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.3,
-          shadowRadius: 8,
-          elevation: 8,
+          position: "absolute",
+          bottom: 32,
+          right: 16,
         }}
       >
-        <Plus size={24} color="white" />
-      </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => setShowCreateModal(true)}
+          className="bg-primary px-6 py-[14px] rounded-2xl items-center justify-center flex-row shadow-sm"
+        >
+          <Text className="text-white font-bold text-sm tracking-widest text-center">
+            + Add New Wallet
+          </Text>
+        </TouchableOpacity>
+      </View>
 
-      {/* Create Book Modal */}
-      <CreateBookModal visible={showCreateModal} onClose={() => setShowCreateModal(false)} />
+      {/* Create / Edit Book Modal */}
+      <CreateWalletModal
+        visible={showCreateModal}
+        onClose={() => {
+          setShowCreateModal(false);
+          setEditingBook(null);
+        }}
+        editBook={editingBook}
+      />
     </>
   );
 }

@@ -16,9 +16,6 @@ import Toast from "react-native-toast-message";
 import { useSendOtp, useVerifyOtp } from "@/api/auth";
 import { useAuth } from "@/context/auth-context";
 
-// Two steps on the same screen:
-//   "email"  → user enters their email and taps "Send OTP"
-//   "otp"    → user enters the 6-digit code and taps "Verify OTP"
 type Step = "email" | "otp";
 
 export default function AuthScreen() {
@@ -30,30 +27,28 @@ export default function AuthScreen() {
 
   const sentOtpMutation = useSendOtp();
   const verifyOtpMutation = useVerifyOtp();
-  const { setAuthState, authState } = useAuth();
+  const { setAuthState, authState, authReady } = useAuth();
 
-  // Animated value for the content sliding between steps
-  // Starts at 0 (visible), will slide left to -width on step change
   const slideAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    if (authState.isAuthenticated) {
+    if (authReady && authState.isAuthenticated) {
       router.replace("/(tabs)");
     }
-  }, [authState.isAuthenticated, router]);
+  }, [authReady, authState.isAuthenticated, router]);
 
-  // Slide the current content out, then swap the step, then slide new content in
+  if (!authReady) {
+    return null;
+  }
+
   const animateToStep = (nextStep: Step) => {
-    // Phase 1: fade + slide out current content
     Animated.parallel([
       Animated.timing(fadeAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
       Animated.timing(slideAnim, { toValue: -30, duration: 200, useNativeDriver: true }),
     ]).start(() => {
-      // Phase 2: update step (content changes) + reset position instantly
       setStep(nextStep);
-      slideAnim.setValue(30);  // set below so it slides up into view
-      // Phase 3: fade + slide new content in
+      slideAnim.setValue(30);
       Animated.parallel([
         Animated.timing(fadeAnim, { toValue: 1, duration: 250, useNativeDriver: true }),
         Animated.timing(slideAnim, { toValue: 0, duration: 250, useNativeDriver: true }),
@@ -120,21 +115,18 @@ export default function AuthScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#f8fafc" }}>
-      {/* KeyboardAvoidingView shifts content up when the keyboard opens */}
+    <SafeAreaView style={{ flex: 1 }}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
       >
         <View style={{ flex: 1, paddingHorizontal: 24 }}>
-
-          {/* ── Back button ── */}
           <TouchableOpacity
             onPress={() => {
               if (step === "otp") {
-                animateToStep("email"); // go back to email step
+                animateToStep("email");
               } else {
-                router.back(); // go back to welcome screen
+                router.back();
               }
             }}
             style={{
@@ -147,8 +139,6 @@ export default function AuthScreen() {
           >
             <ArrowLeft size={22} color="#374151" />
           </TouchableOpacity>
-
-          {/* ── Animated content area ── */}
           <Animated.View
             style={{
               flex: 1,
@@ -157,14 +147,13 @@ export default function AuthScreen() {
               paddingTop: 40,
             }}
           >
-            {/* Step indicator dots */}
             <View style={{ flexDirection: "row", gap: 6, marginBottom: 32 }}>
               <View
                 style={{
                   width: step === "email" ? 20 : 8,
                   height: 8,
                   borderRadius: 4,
-                  backgroundColor: "#22c55e",
+                  backgroundColor: "#00929A",
                 }}
               />
               <View
@@ -172,38 +161,42 @@ export default function AuthScreen() {
                   width: step === "otp" ? 20 : 8,
                   height: 8,
                   borderRadius: 4,
-                  backgroundColor: step === "otp" ? "#22c55e" : "#d1d5db",
+                  backgroundColor: step === "otp" ? "#00929A" : "#d1d5db",
                 }}
               />
             </View>
 
             {step === "email" ? (
-              // ─── Email Step ───
               <>
                 <View
                   style={{
                     width: 52,
                     height: 52,
                     borderRadius: 14,
-                    backgroundColor: "#dcfce7",
+                    backgroundColor: "rgba(0, 146, 154, 0.1)",
                     alignItems: "center",
                     justifyContent: "center",
                     marginBottom: 20,
                   }}
                 >
-                  <Mail size={26} color="#22c55e" />
+                  <Mail size={26} color="#00929A" />
                 </View>
 
-                <Text style={{ fontSize: 26, fontWeight: "800", color: "#111827", marginBottom: 8 }}>
+                <Text
+                  style={{
+                    fontSize: 30,
+                    fontWeight: "800",
+                    color: "#111827",
+                    letterSpacing: -0.5,
+                  }}
+                >
                   Enter your email
                 </Text>
-                <Text style={{ fontSize: 14, color: "#6b7280", marginBottom: 32, lineHeight: 20 }}>
-                  We&apos;ll send a one-time password{"\n"}to verify your account.
+
+                <Text className="mt-4 text-md text-gray-500 leading-6 mb-4">
+                  We&apos;ll send a one-time password to verify your account.
                 </Text>
 
-                <Text style={{ fontSize: 13, fontWeight: "600", color: "#374151", marginBottom: 8 }}>
-                  Email address
-                </Text>
                 <TextInput
                   value={email}
                   onChangeText={setEmail}
@@ -224,15 +217,13 @@ export default function AuthScreen() {
                   }}
                 />
 
-                <View style={{ flex: 1 }} />
-
                 <TouchableOpacity
                   onPress={handleSendOtp}
                   disabled={sentOtpMutation.isPending || !email.trim()}
                   activeOpacity={0.85}
+                  className="mt-4 rounded-2xl"
                   style={{
-                    backgroundColor: email.trim() ? "#22c55e" : "#d1d5db",
-                    borderRadius: 14,
+                    backgroundColor: email.trim() ? "#00929A" : "#d1d5db",
                     paddingVertical: 16,
                     alignItems: "center",
                     justifyContent: "center",
@@ -249,20 +240,19 @@ export default function AuthScreen() {
                 </TouchableOpacity>
               </>
             ) : (
-              // ─── OTP Step ───
               <>
                 <View
                   style={{
                     width: 52,
                     height: 52,
                     borderRadius: 14,
-                    backgroundColor: "#dcfce7",
+                    backgroundColor: "rgba(0, 146, 154, 0.1)",
                     alignItems: "center",
                     justifyContent: "center",
                     marginBottom: 20,
                   }}
                 >
-                  <ShieldCheck size={26} color="#22c55e" />
+                  <ShieldCheck size={26} color="#00929A" />
                 </View>
 
                 <Text style={{ fontSize: 26, fontWeight: "800", color: "#111827", marginBottom: 8 }}>
@@ -271,13 +261,10 @@ export default function AuthScreen() {
                 <Text style={{ fontSize: 14, color: "#6b7280", marginBottom: 4, lineHeight: 20 }}>
                   We sent a code to
                 </Text>
-                <Text style={{ fontSize: 14, fontWeight: "700", color: "#22c55e", marginBottom: 32 }}>
+                <Text style={{ fontSize: 14, color: "#00929A" }} className="mb-4">
                   {email}
                 </Text>
 
-                <Text style={{ fontSize: 13, fontWeight: "600", color: "#374151", marginBottom: 8 }}>
-                  One-time password
-                </Text>
                 <TextInput
                   value={otp}
                   onChangeText={setOtp}
@@ -292,32 +279,28 @@ export default function AuthScreen() {
                     borderRadius: 12,
                     paddingHorizontal: 16,
                     paddingVertical: 14,
-                    fontSize: 22,
+                    fontSize: 15,
                     color: "#111827",
-                    letterSpacing: 8,
-                    fontWeight: "700",
                   }}
                 />
 
                 <TouchableOpacity
                   onPress={() => animateToStep("email")}
-                  style={{ marginTop: 12 }}
+                  className="pt-4"
                 >
                   <Text style={{ fontSize: 13, color: "#6b7280" }}>
                     Didn&apos;t receive it?{" "}
-                    <Text style={{ color: "#22c55e", fontWeight: "600" }}>Resend</Text>
+                    <Text style={{ color: "#00929A", fontWeight: "600" }}>Resend</Text>
                   </Text>
                 </TouchableOpacity>
-
-                <View style={{ flex: 1 }} />
 
                 <TouchableOpacity
                   onPress={handleVerifyOtp}
                   disabled={verifyOtpMutation.isPending || otp.length < 6}
                   activeOpacity={0.85}
+                  className="mt-4 rounded-2xl"
                   style={{
-                    backgroundColor: otp.length >= 6 ? "#22c55e" : "#d1d5db",
-                    borderRadius: 14,
+                    backgroundColor: otp.length >= 6 ? "#00929A" : "#d1d5db",
                     paddingVertical: 16,
                     alignItems: "center",
                     justifyContent: "center",

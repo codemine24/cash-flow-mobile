@@ -3,6 +3,7 @@ import { useRouter } from "expo-router";
 import { useEffect, useRef } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowRight } from "lucide-react-native";
+import { useAuth } from "@/context/auth-context";
 
 const { width, height } = Dimensions.get("window");
 
@@ -13,21 +14,37 @@ export default function WelcomeScreen() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(40)).current;
 
+  const { authState, authReady } = useAuth();
+
   // Run fade-in + slide-up animation when screen loads
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 700,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 700,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [fadeAnim, slideAnim]);
+    // Determine path based on auth state
+    if (authReady) {
+      if (authState.isAuthenticated) {
+        // If already authenticated, redirect straight to tabs
+        router.replace("/(tabs)");
+        return;
+      }
+      // Otherwise, stay on Welcome Screen and run the animations
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 700,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 700,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [authReady, authState.isAuthenticated, router, fadeAnim, slideAnim]);
+
+  // If auth is still initializing, render nothing / a loader until it figures out where to go
+  if (!authReady) {
+    return null;
+  }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#f8fafc" }}>
@@ -36,22 +53,14 @@ export default function WelcomeScreen() {
         {/* ── App preview image ── */}
         <Animated.View
           style={{
-            opacity: fadeAnim,
             transform: [{ translateY: slideAnim }],
             marginTop: height * 0.06,
-            width: width * 0.72,
+            width: width * 1,
             height: height * 0.44,
-            borderRadius: 24,
-            overflow: "hidden",
-            shadowColor: "#22c55e",
-            shadowOffset: { width: 0, height: 8 },
-            shadowOpacity: 0.15,
-            shadowRadius: 24,
-            elevation: 12,
           }}
         >
           <Image
-            source={require("../assets/images/welcome-preview.png")}
+            source={require("../assets/images/welcome-image.png")}
             style={{ width: "100%", height: "100%" }}
             resizeMode="cover"
           />
@@ -76,19 +85,11 @@ export default function WelcomeScreen() {
             }}
           >
             Track Every{"\n"}
-            <Text style={{ color: "#22c55e" }}>Cash Flow</Text>
+            <Text className="text-primary">Cash Flow</Text>
           </Text>
 
-          <Text
-            style={{
-              fontSize: 15,
-              color: "#6b7280",
-              textAlign: "center",
-              marginTop: 12,
-              lineHeight: 22,
-            }}
-          >
-            Manage your books, track income{"\n"}and expenses — all in one place.
+          <Text className="mt-4 text-center text-md text-gray-500 leading-6">
+            Track daily expenses and savings management. Share specific wallets with family or friends for real-time financial transparency.
           </Text>
         </Animated.View>
 
@@ -106,19 +107,9 @@ export default function WelcomeScreen() {
           <TouchableOpacity
             onPress={() => router.push("/auth")}
             activeOpacity={0.85}
-            style={{
-              backgroundColor: "#22c55e",
-              borderRadius: 16,
-              paddingVertical: 18,
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 8,
-            }}
+            className="rounded-2xl bg-primary p-4 flex-row items-center justify-center gap-2"
           >
-            <Text style={{ fontSize: 17, fontWeight: "700", color: "#ffffff" }}>
-              Get Started
-            </Text>
+            <Text className="text-white font-bold text-lg">Get Started</Text>
             <ArrowRight size={20} color="#ffffff" strokeWidth={2.5} />
           </TouchableOpacity>
         </Animated.View>
