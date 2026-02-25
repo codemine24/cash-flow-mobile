@@ -66,9 +66,11 @@ export const useCreateTransaction = () => {
 export const useUpdateTransaction = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: async ({ id, transaction }: { id: string, transaction: any }) => {
+        mutationFn: async ({ id, transaction }: { id: string, transaction: Partial<TransactionRequest> }) => {
+            console.log("transaction......", transaction);
             try {
                 const response = await apiClient.patch(`${TRANSACTION_API_URL}/${id}`, transaction);
+                console.log("response......", response);
                 return response;
             } catch (error) {
                 console.log(error);

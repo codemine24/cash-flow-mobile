@@ -49,7 +49,7 @@ export function AddTransactionModal({
       if (editTransaction) {
         setType(editTransaction.type);
         setAmount(editTransaction.amount ? editTransaction.amount.toString() : "");
-        setSelectedCategory(editTransaction.category_id || "other");
+        // setSelectedCategory(editTransaction.category_id || "other");
         setRemark(editTransaction.remark || "");
       } else {
         setType(initialType);
@@ -100,9 +100,18 @@ export function AddTransactionModal({
     let response: any;
     try {
       if (editTransaction) {
+        const updatePayload = {
+          amount: parseFloat(amount),
+          category_id: !isDeposit
+            ? selectedCategory === "other"
+              ? undefined
+              : selectedCategory
+            : undefined,
+          remark,
+        };
         response = await updateTransactionMutation.mutateAsync({
           id: editTransaction.id,
-          transaction: payload,
+          transaction: updatePayload,
         });
       } else {
         response = await createTransactionMutation.mutateAsync(payload);
@@ -127,10 +136,12 @@ export function AddTransactionModal({
         });
       }
     } catch (e: any) {
+      console.log("ZOD ERROR DATA: ", e?.response?.data);
+      const errorMessage = e?.response?.data?.message || e?.response?.data?.error || e?.message || "Failed to save transaction";
       Toast.show({
         type: "error",
-        text1: "Error",
-        text2: e?.message || "Failed to save transaction",
+        text1: "Validation Error",
+        text2: errorMessage,
       });
     }
   };
