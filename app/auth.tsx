@@ -120,7 +120,7 @@ export default function AuthScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#f8fafc" }}>
+    <SafeAreaView style={{ flex: 1 }}>
       {/* KeyboardAvoidingView shifts content up when the keyboard opens */}
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -164,7 +164,7 @@ export default function AuthScreen() {
                   width: step === "email" ? 20 : 8,
                   height: 8,
                   borderRadius: 4,
-                  backgroundColor: "#22c55e",
+                  backgroundColor: "#00929A",
                 }}
               />
               <View
@@ -172,7 +172,7 @@ export default function AuthScreen() {
                   width: step === "otp" ? 20 : 8,
                   height: 8,
                   borderRadius: 4,
-                  backgroundColor: step === "otp" ? "#22c55e" : "#d1d5db",
+                  backgroundColor: step === "otp" ? "#00929A" : "#d1d5db",
                 }}
               />
             </View>
@@ -185,25 +185,30 @@ export default function AuthScreen() {
                     width: 52,
                     height: 52,
                     borderRadius: 14,
-                    backgroundColor: "#dcfce7",
+                    backgroundColor: "rgba(0, 146, 154, 0.1)",
                     alignItems: "center",
                     justifyContent: "center",
                     marginBottom: 20,
                   }}
                 >
-                  <Mail size={26} color="#22c55e" />
+                  <Mail size={26} color="#00929A" />
                 </View>
 
-                <Text style={{ fontSize: 26, fontWeight: "800", color: "#111827", marginBottom: 8 }}>
+                <Text
+                  style={{
+                    fontSize: 30,
+                    fontWeight: "800",
+                    color: "#111827",
+                    letterSpacing: -0.5,
+                  }}
+                >
                   Enter your email
                 </Text>
-                <Text style={{ fontSize: 14, color: "#6b7280", marginBottom: 32, lineHeight: 20 }}>
-                  We&apos;ll send a one-time password{"\n"}to verify your account.
+
+                <Text className="mt-4 text-md text-gray-500 leading-6 mb-4">
+                  We&apos;ll send a one-time password to verify your account.
                 </Text>
 
-                <Text style={{ fontSize: 13, fontWeight: "600", color: "#374151", marginBottom: 8 }}>
-                  Email address
-                </Text>
                 <TextInput
                   value={email}
                   onChangeText={setEmail}
@@ -224,15 +229,13 @@ export default function AuthScreen() {
                   }}
                 />
 
-                <View style={{ flex: 1 }} />
-
                 <TouchableOpacity
                   onPress={handleSendOtp}
                   disabled={sentOtpMutation.isPending || !email.trim()}
                   activeOpacity={0.85}
+                  className="mt-4 rounded-2xl"
                   style={{
-                    backgroundColor: email.trim() ? "#22c55e" : "#d1d5db",
-                    borderRadius: 14,
+                    backgroundColor: email.trim() ? "#00929A" : "#d1d5db",
                     paddingVertical: 16,
                     alignItems: "center",
                     justifyContent: "center",
@@ -256,13 +259,13 @@ export default function AuthScreen() {
                     width: 52,
                     height: 52,
                     borderRadius: 14,
-                    backgroundColor: "#dcfce7",
+                    backgroundColor: "rgba(0, 146, 154, 0.1)",
                     alignItems: "center",
                     justifyContent: "center",
                     marginBottom: 20,
                   }}
                 >
-                  <ShieldCheck size={26} color="#22c55e" />
+                  <ShieldCheck size={26} color="#00929A" />
                 </View>
 
                 <Text style={{ fontSize: 26, fontWeight: "800", color: "#111827", marginBottom: 8 }}>
@@ -271,13 +274,10 @@ export default function AuthScreen() {
                 <Text style={{ fontSize: 14, color: "#6b7280", marginBottom: 4, lineHeight: 20 }}>
                   We sent a code to
                 </Text>
-                <Text style={{ fontSize: 14, fontWeight: "700", color: "#22c55e", marginBottom: 32 }}>
+                <Text style={{ fontSize: 14, fontWeight: "700", color: "#00929A" }} className="mb-4">
                   {email}
                 </Text>
 
-                <Text style={{ fontSize: 13, fontWeight: "600", color: "#374151", marginBottom: 8 }}>
-                  One-time password
-                </Text>
                 <TextInput
                   value={otp}
                   onChangeText={setOtp}
@@ -292,32 +292,28 @@ export default function AuthScreen() {
                     borderRadius: 12,
                     paddingHorizontal: 16,
                     paddingVertical: 14,
-                    fontSize: 22,
+                    fontSize: 15,
                     color: "#111827",
-                    letterSpacing: 8,
-                    fontWeight: "700",
                   }}
                 />
 
                 <TouchableOpacity
                   onPress={() => animateToStep("email")}
-                  style={{ marginTop: 12 }}
+                  className="pt-4"
                 >
                   <Text style={{ fontSize: 13, color: "#6b7280" }}>
                     Didn&apos;t receive it?{" "}
-                    <Text style={{ color: "#22c55e", fontWeight: "600" }}>Resend</Text>
+                    <Text style={{ color: "#00929A", fontWeight: "600" }}>Resend</Text>
                   </Text>
                 </TouchableOpacity>
-
-                <View style={{ flex: 1 }} />
 
                 <TouchableOpacity
                   onPress={handleVerifyOtp}
                   disabled={verifyOtpMutation.isPending || otp.length < 6}
                   activeOpacity={0.85}
+                  className="mt-4 rounded-2xl"
                   style={{
-                    backgroundColor: otp.length >= 6 ? "#22c55e" : "#d1d5db",
-                    borderRadius: 14,
+                    backgroundColor: otp.length >= 6 ? "#00929A" : "#d1d5db",
                     paddingVertical: 16,
                     alignItems: "center",
                     justifyContent: "center",
