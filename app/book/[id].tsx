@@ -194,7 +194,7 @@ export default function BookDetailScreen() {
                 {group.data.map((item, index) => (
                   <View
                     key={item.id}
-                    className={`rounded-2xl mt-2 px-4 py-4 flex-row justify-between bg-white ${index !== group.data.length - 1 ? "border-b border-border" : ""
+                    className={`rounded-2xl mt-4 px-4 py-4 flex-row justify-between bg-white ${index !== group.data.length - 1 ? "border-b border-border" : ""
                       }`}
                   >
                     <View className="flex-1 mr-2 ">

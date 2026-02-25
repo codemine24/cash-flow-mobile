@@ -70,7 +70,7 @@ export default function HomeScreen() {
                 return (
                   <TouchableOpacity
                     onPress={() => router.push({ pathname: "/book/[id]", params: { id: book.id } } as any)}
-                    className="bg-surface rounded-xl p-4 mb-4 border border-border active:opacity-70 flex-row items-center justify-between"
+                    className="bg-surface rounded-2xl p-4 mt-4 border border-border active:opacity-70 flex-row items-center justify-between"
                   >
                     {/* Left: Icon and Name/Date */}
                     <View className="flex-row items-center flex-1">
