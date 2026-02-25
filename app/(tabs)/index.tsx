@@ -35,8 +35,8 @@ export default function HomeScreen() {
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
           {/* Header */}
           <View className="mb-6">
-            <Text className="text-3xl font-bold text-foreground">Books</Text>
-            <Text className="text-sm text-muted mt-1">Manage your expense books</Text>
+            <Text className="text-3xl font-bold text-foreground">Wallets</Text>
+            <Text className="text-sm text-muted mt-1">Create separate wallets to organize your expenses</Text>
           </View>
 
           {/* Books List */}
