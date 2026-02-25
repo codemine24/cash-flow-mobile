@@ -6,13 +6,10 @@ import {
   TouchableOpacity,
   ScrollView,
   TextInput,
-  Platform,
   Alert,
   StyleSheet,
 } from "react-native";
-import DateTimePicker from "@react-native-community/datetimepicker";
-import { useBooks } from "@/lib/book-context";
-import { Calendar, X } from "lucide-react-native";
+import { X } from "lucide-react-native";
 import { useCreateTransaction } from "@/api/transaction";
 import Toast from "react-native-toast-message";
 
@@ -50,7 +47,7 @@ export function AddTransactionModal({
       setAmount("");
       setSelectedCategory("other");
       setRemark("");
-      // setDate(new Date());  
+      // setDate(new Date());
     }
   }, [visible, initialType]);
 
@@ -81,7 +78,11 @@ export function AddTransactionModal({
       book_id: bookId,
       type,
       amount: parseFloat(amount),
-      category_id: !isDeposit ? selectedCategory === "other" ? undefined : selectedCategory : undefined,
+      category_id: !isDeposit
+        ? selectedCategory === "other"
+          ? undefined
+          : selectedCategory
+        : undefined,
       remark,
       // date: date.toISOString().split("T")[0],
     });
@@ -106,27 +107,36 @@ export function AddTransactionModal({
     }
   };
 
-  const formatDisplayDate = (d: Date) => {
-    return d.toLocaleDateString("en-US", {
-      weekday: "short",
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
+  // const formatDisplayDate = (d: Date) => {
+  //   return d.toLocaleDateString("en-US", {
+  //     weekday: "short",
+  //     year: "numeric",
+  //     month: "short",
+  //     day: "numeric",
+  //   });
+  // };
 
   return (
     <Modal visible={visible} animationType="slide" transparent={true}>
       <View style={styles.overlay}>
-        <TouchableOpacity style={styles.flex1} activeOpacity={1} onPress={onClose} />
+        <TouchableOpacity
+          style={styles.flex1}
+          activeOpacity={1}
+          onPress={onClose}
+        />
         <View style={styles.container}>
           <View style={styles.handleContainer}>
             <View style={styles.handle} />
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+          >
             <View style={styles.header}>
-              <Text style={styles.title}>{isDeposit ? "Cash In" : "Cash Out"}</Text>
+              <Text style={styles.title}>
+                {isDeposit ? "Cash In" : "Cash Out"}
+              </Text>
               <TouchableOpacity onPress={onClose} style={styles.closeButton}>
                 <X size={20} color="#71717A" />
               </TouchableOpacity>
@@ -134,8 +144,18 @@ export function AddTransactionModal({
 
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Amount</Text>
-              <View style={[styles.amountInputContainer, { borderColor: accentColor + "30", backgroundColor: accentColor + "08" }]}>
-                <Text style={[styles.currencySymbol, { color: accentColor }]}>$</Text>
+              <View
+                style={[
+                  styles.amountInputContainer,
+                  {
+                    borderColor: accentColor + "30",
+                    backgroundColor: accentColor + "08",
+                  },
+                ]}
+              >
+                <Text style={[styles.currencySymbol, { color: accentColor }]}>
+                  $
+                </Text>
                 <TextInput
                   value={amount}
                   onChangeText={setAmount}
@@ -160,11 +180,20 @@ export function AddTransactionModal({
                         onPress={() => setSelectedCategory(category.id)}
                         style={[
                           styles.categoryButton,
-                          isSelected ? styles.categoryButtonSelected : styles.categoryButtonUnselected,
+                          isSelected
+                            ? styles.categoryButtonSelected
+                            : styles.categoryButtonUnselected,
                         ]}
                       >
                         <Text style={styles.categoryIcon}>{category.icon}</Text>
-                        <Text style={[styles.categoryText, isSelected ? styles.categoryTextSelected : styles.categoryTextUnselected]}>
+                        <Text
+                          style={[
+                            styles.categoryText,
+                            isSelected
+                              ? styles.categoryTextSelected
+                              : styles.categoryTextUnselected,
+                          ]}
+                        >
                           {category.name}
                         </Text>
                       </TouchableOpacity>
@@ -205,7 +234,11 @@ export function AddTransactionModal({
               <TextInput
                 value={remark}
                 onChangeText={setRemark}
-                placeholder={isDeposit ? "e.g., Salary, Business income..." : "e.g., Lunch, Uber ride..."}
+                placeholder={
+                  isDeposit
+                    ? "e.g., Salary, Business income..."
+                    : "e.g., Lunch, Uber ride..."
+                }
                 placeholderTextColor="#A1A1AA"
                 style={styles.remarkInput}
                 multiline
@@ -216,11 +249,22 @@ export function AddTransactionModal({
             <TouchableOpacity
               onPress={handleAddTransaction}
               disabled={createTransactionMutation.isPending}
-              style={[styles.submitButton, { backgroundColor: createTransactionMutation.isPending ? accentColor + "80" : accentColor }]}
+              style={[
+                styles.submitButton,
+                {
+                  backgroundColor: createTransactionMutation.isPending
+                    ? accentColor + "80"
+                    : accentColor,
+                },
+              ]}
               activeOpacity={0.8}
             >
               <Text style={styles.submitButtonText}>
-                {createTransactionMutation.isPending ? "SAVING..." : isDeposit ? "ADD CASH IN" : "ADD CASH OUT"}
+                {createTransactionMutation.isPending
+                  ? "SAVING..."
+                  : isDeposit
+                    ? "ADD CASH IN"
+                    : "ADD CASH OUT"}
               </Text>
             </TouchableOpacity>
           </ScrollView>
