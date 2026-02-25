@@ -148,14 +148,6 @@ export default function HomeScreen() {
                           </TouchableOpacity>
 
                           <TouchableOpacity
-                            onPress={() => { }}
-                            className="flex-row items-center"
-                          >
-                            <CornerDownRight size={20} color="#ef4444" />
-                            <Text className="ml-4 text-[16px] text-red-500">Move book</Text>
-                          </TouchableOpacity>
-
-                          <TouchableOpacity
                             onPress={() => handleDeleteBook(book.id, book.name)}
                             className="flex-row items-center mt-1"
                           >
