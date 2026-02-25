@@ -69,7 +69,7 @@ export const useUpdateBook = () => {
   return useMutation({
     mutationFn: async ({ id, name }: { id: string, name: string }) => {
       try {
-        const response = await apiClient.put(`${BOOK_API_URL}/${id}`, { name });
+        const response = await apiClient.patch(`${BOOK_API_URL}/${id}`, { name });
         return response;
       } catch (error) {
         console.log(error);

@@ -9,35 +9,51 @@ import {
   Platform,
 } from "react-native";
 import { useColors } from "@/hooks/use-colors";
-import { useCreateBook } from "@/api/books";
+import { useCreateBook, useUpdateBook } from "@/api/books";
 import Toast from "react-native-toast-message";
 
 interface CreateBookModalProps {
   visible: boolean;
   onClose: () => void;
+  editBook?: { id: string; name: string } | null;
 }
 
-export function CreateBookModal({ visible, onClose }: CreateBookModalProps) {
+export function CreateBookModal({ visible, onClose, editBook }: CreateBookModalProps) {
   const colors = useColors();
-  const [bookName, setBookName] = useState("");
+  const [bookName, setBookName] = useState(editBook?.name || "");
   const createBookMutation = useCreateBook();
+  const updateBookMutation = useUpdateBook();
 
-  const handleCreate = async () => {
+  // Keep internal state synced when editBook changes while open
+  React.useEffect(() => {
+    if (visible && editBook) {
+      setBookName(editBook.name);
+    } else if (visible && !editBook) {
+      setBookName("");
+    }
+  }, [visible, editBook]);
+
+  const handleAction = async () => {
     if (!bookName.trim()) {
       Toast.show({
         type: "error",
-        text1: "Please enter a book name",
+        text1: "Please enter a wallet name",
       });
       return;
     }
+    const isEdit = !!editBook;
     try {
-      await createBookMutation.mutateAsync(bookName.trim());
+      if (isEdit) {
+        await updateBookMutation.mutateAsync({ id: editBook.id, name: bookName.trim() });
+      } else {
+        await createBookMutation.mutateAsync(bookName.trim());
+      }
       setBookName("");
       onClose();
     } catch {
       Toast.show({
         type: "error",
-        text1: "Failed to create book",
+        text1: `Failed to ${isEdit ? 'rename' : 'create'} wallet`,
       });
     }
   };
@@ -46,6 +62,8 @@ export function CreateBookModal({ visible, onClose }: CreateBookModalProps) {
     setBookName("");
     onClose();
   };
+
+  const isPending = createBookMutation.isPending || updateBookMutation.isPending;
 
   return (
     // animationType="slide" makes it slide up from the bottom
@@ -70,7 +88,7 @@ export function CreateBookModal({ visible, onClose }: CreateBookModalProps) {
             {/* Header */}
             <View className="flex-row justify-between items-center mb-6">
               <Text className="text-2xl font-bold text-foreground">
-                New Book
+                {editBook ? "Rename Wallet" : "New Wallet"}
               </Text>
               <TouchableOpacity
                 onPress={handleClose}
@@ -82,7 +100,7 @@ export function CreateBookModal({ visible, onClose }: CreateBookModalProps) {
 
             {/* Book name input */}
             <Text className="text-sm font-semibold text-muted mb-2">
-              Book name
+              Wallet name
             </Text>
             <TextInput
               value={bookName}
@@ -91,26 +109,28 @@ export function CreateBookModal({ visible, onClose }: CreateBookModalProps) {
               placeholderTextColor={colors.muted}
               className="bg-surface rounded-lg px-4 py-3 border border-border text-foreground mb-8"
               autoFocus
-              editable={!createBookMutation.isPending}
-              onSubmitEditing={handleCreate}
+              editable={!isPending}
+              onSubmitEditing={handleAction}
             />
 
             {/* Action buttons */}
             <View className="flex-row gap-3">
               <TouchableOpacity
                 onPress={handleClose}
-                disabled={createBookMutation.isPending}
+                disabled={isPending}
                 className="flex-1 bg-surface rounded-lg py-3 border border-border items-center justify-center"
               >
                 <Text className="text-foreground font-semibold">Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={handleCreate}
-                disabled={createBookMutation.isPending}
-                className={`flex-1 rounded-lg py-3 items-center justify-center ${createBookMutation.isPending ? "bg-primary/50" : "bg-primary"}`}
+                onPress={handleAction}
+                disabled={isPending}
+                className={`flex-1 rounded-lg py-3 items-center justify-center ${isPending ? "bg-primary/50" : "bg-primary"}`}
               >
                 <Text className="text-background font-semibold">
-                  {createBookMutation.isPending ? "Creating..." : "Create"}
+                  {isPending
+                    ? (editBook ? "Renaming..." : "Creating...")
+                    : (editBook ? "Rename" : "Create")}
                 </Text>
               </TouchableOpacity>
             </View>

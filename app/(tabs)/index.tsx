@@ -15,9 +15,7 @@ export default function HomeScreen() {
   const { data: booksData, isLoading } = useBooks();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [activeMenuBook, setActiveMenuBook] = useState<{ id: string; name: string } | null>(null);
-
-  console.log('booksData.......', booksData);
-
+  const [editingBook, setEditingBook] = useState<{ id: string; name: string } | null>(null);
 
   const handleDeleteBook = (bookId: string, bookName: string) => {
     // Add real delete logic here later
@@ -25,6 +23,10 @@ export default function HomeScreen() {
   };
 
   const handleRename = () => {
+    if (activeMenuBook) {
+      setEditingBook(activeMenuBook);
+      setShowCreateModal(true);
+    }
     setActiveMenuBook(null);
   };
 
@@ -185,8 +187,15 @@ export default function HomeScreen() {
         <Plus size={24} color="white" />
       </TouchableOpacity>
 
-      {/* Create Book Modal */}
-      <CreateBookModal visible={showCreateModal} onClose={() => setShowCreateModal(false)} />
+      {/* Create / Edit Book Modal */}
+      <CreateBookModal
+        visible={showCreateModal}
+        onClose={() => {
+          setShowCreateModal(false);
+          setEditingBook(null);
+        }}
+        editBook={editingBook}
+      />
     </>
   );
 }
