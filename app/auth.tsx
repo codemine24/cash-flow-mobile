@@ -27,16 +27,20 @@ export default function AuthScreen() {
 
   const sentOtpMutation = useSendOtp();
   const verifyOtpMutation = useVerifyOtp();
-  const { setAuthState, authState } = useAuth();
+  const { setAuthState, authState, authReady } = useAuth();
 
   const slideAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    if (authState.isAuthenticated) {
+    if (authReady && authState.isAuthenticated) {
       router.replace("/(tabs)");
     }
-  }, [authState.isAuthenticated, router]);
+  }, [authReady, authState.isAuthenticated, router]);
+
+  if (!authReady) {
+    return null;
+  }
 
   const animateToStep = (nextStep: Step) => {
     Animated.parallel([
@@ -257,7 +261,7 @@ export default function AuthScreen() {
                 <Text style={{ fontSize: 14, color: "#6b7280", marginBottom: 4, lineHeight: 20 }}>
                   We sent a code to
                 </Text>
-                <Text style={{ fontSize: 14, fontWeight: "700", color: "#00929A" }} className="mb-4">
+                <Text style={{ fontSize: 14, color: "#00929A" }} className="mb-4">
                   {email}
                 </Text>
 

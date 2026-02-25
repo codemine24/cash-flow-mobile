@@ -3,6 +3,7 @@ import { useRouter } from "expo-router";
 import { useEffect, useRef } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowRight } from "lucide-react-native";
+import { useAuth } from "@/context/auth-context";
 
 const { width, height } = Dimensions.get("window");
 
@@ -13,21 +14,37 @@ export default function WelcomeScreen() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(40)).current;
 
+  const { authState, authReady } = useAuth();
+
   // Run fade-in + slide-up animation when screen loads
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 700,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 700,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [fadeAnim, slideAnim]);
+    // Determine path based on auth state
+    if (authReady) {
+      if (authState.isAuthenticated) {
+        // If already authenticated, redirect straight to tabs
+        router.replace("/(tabs)");
+        return;
+      }
+      // Otherwise, stay on Welcome Screen and run the animations
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 700,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 700,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [authReady, authState.isAuthenticated, router, fadeAnim, slideAnim]);
+
+  // If auth is still initializing, render nothing / a loader until it figures out where to go
+  if (!authReady) {
+    return null;
+  }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#f8fafc" }}>
