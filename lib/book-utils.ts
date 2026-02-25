@@ -23,11 +23,12 @@ export function calculateBookBalance(book: Book): {
   };
 }
 
-export function formatCurrency(amount: number): string {
+export function formatCurrency(amount: number | string): string {
+  const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
-  }).format(amount);
+  }).format(numericAmount || 0);
 }
 
 export function getTransactionsByDate(transactions: Transaction[]): Record<string, Transaction[]> {

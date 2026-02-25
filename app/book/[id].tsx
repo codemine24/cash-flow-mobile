@@ -23,6 +23,8 @@ export default function BookDetailScreen() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [defaultType, setDefaultType] = useState<"IN" | "OUT">("OUT");
 
+  console.log("book.......", JSON.stringify(book?.data, null, 2));
+
   const groupedTransactions = useMemo(() => {
     if (!book?.data?.transactions) return [];
 
@@ -33,10 +35,11 @@ export default function BookDetailScreen() {
     let runningBalance = book.data.balance;
     const annotated = sorted.map((t) => {
       const current = runningBalance;
+      const amountValue = typeof t.amount === 'string' ? parseFloat(t.amount) : t.amount;
       if (t.type === "IN") {
-        runningBalance -= t.amount;
+        runningBalance -= amountValue;
       } else {
-        runningBalance += t.amount;
+        runningBalance += amountValue;
       }
       return { ...t, runningBalance: current };
     });
@@ -133,13 +136,13 @@ export default function BookDetailScreen() {
         <View className="flex-row items-center justify-center mb-5 px-6">
           <View className="flex-1 h-[1px] bg-gray-200" />
           <Text className="text-gray-500 font-medium text-[11px] mx-4 tracking-wide">
-            Showing {book.data.transactions.length} entries
+            Showing {book?.data?.transactions?.length} entries
           </Text>
           <View className="flex-1 h-[1px] bg-gray-200" />
         </View>
 
         {/* Transactions List */}
-        {book.data.transactions.length === 0 ? (
+        {book?.data?.transactions?.length === 0 ? (
           <View className="mx-4 bg-white rounded-xl p-8 items-center justify-center border border-gray-100">
             <Text className="text-lg font-semibold text-gray-900 mb-2">
               No transactions
@@ -171,15 +174,15 @@ export default function BookDetailScreen() {
                   >
                     <View className="flex-1 mr-2">
                       <View className="bg-[#E6F3FF] self-start px-2 py-[2px] rounded mb-2">
-                        <Text className="text-[#0E5B8E] text-[11px] font-bold uppercase tracking-wider">
-                          {item.category || "Cash"}
+                        <Text className="text-primary text-[11px] font-bold uppercase tracking-wider">
+                          {item.category || "Cash in"}
                         </Text>
                       </View>
-                      <Text className="text-gray-900 text-[15px] mb-2 font-medium tracking-tight">
+                      <Text className="text-sm mb-2 font-medium">
                         {item.remark || item.category || "No remark"}
                       </Text>
-                      <Text className="text-[12px] text-gray-500">
-                        <Text className="text-[#51449B] font-bold">Entry by You</Text> at{" "}
+                      <Text className="text-sm text-gray-500">
+                        Added on{" "}
                         {new Date(item.created_at).toLocaleTimeString("en-US", {
                           hour: "numeric",
                           minute: "2-digit",
@@ -188,12 +191,12 @@ export default function BookDetailScreen() {
                     </View>
                     <View className="items-end pt-1">
                       <Text
-                        className={`text-[16px] font-bold mb-1 ${item.type === "IN" ? "text-[#2E7D32]" : "text-[#C62828]"
+                        className={`text-sm font-bold mb-1 ${item.type === "IN" ? "text-[#2E7D32]" : "text-[#C62828]"
                           }`}
                       >
                         {formatCurrency(item.amount)}
                       </Text>
-                      <Text className="text-[11px] text-gray-500 font-medium tracking-tight">
+                      <Text className="text-sm text-gray-500">
                         Balance: {formatCurrency(item.runningBalance)}
                       </Text>
                     </View>
