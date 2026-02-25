@@ -1,5 +1,5 @@
 import { useBooks } from "@/api/books";
-import { CreateBookModal } from "@/components/create-book-modal";
+import { CreateWalletModal } from "@/components/create-wallet-modal";
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
 import { formatCurrency, formatUpdateDate } from "@/lib/book-utils";
@@ -8,6 +8,7 @@ import { Book, CornerDownRight, Edit3, MoreVertical, Plus, Trash2, UserPlus } fr
 import { useState } from "react";
 import { FlatList, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import Popover from 'react-native-popover-view';
+// import { ScreenContainer } from "react-native-screens";
 
 export default function HomeScreen() {
   const colors = useColors();
@@ -37,7 +38,7 @@ export default function HomeScreen() {
   return (
     <>
       <ScreenContainer className="p-4 bg-background">
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
+        <ScrollView showsVerticalScrollIndicator={false}>
           {/* Header */}
           <View className="mb-6">
             <Text className="text-3xl font-bold text-foreground">Wallets</Text>
@@ -188,7 +189,7 @@ export default function HomeScreen() {
       </TouchableOpacity>
 
       {/* Create / Edit Book Modal */}
-      <CreateBookModal
+      <CreateWalletModal
         visible={showCreateModal}
         onClose={() => {
           setShowCreateModal(false);

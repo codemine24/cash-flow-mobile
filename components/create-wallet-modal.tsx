@@ -18,7 +18,7 @@ interface CreateBookModalProps {
   editBook?: { id: string; name: string } | null;
 }
 
-export function CreateBookModal({ visible, onClose, editBook }: CreateBookModalProps) {
+export function CreateWalletModal({ visible, onClose, editBook }: CreateBookModalProps) {
   const colors = useColors();
   const [bookName, setBookName] = useState(editBook?.name || "");
   const createBookMutation = useCreateBook();
