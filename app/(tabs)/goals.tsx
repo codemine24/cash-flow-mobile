@@ -143,8 +143,8 @@ export default function GoalsScreen() {
                     {/* Percentage text */}
                     <View className="flex-row justify-between">
                       <Text className="text-xs text-muted">
-                        {goal.entries.length} entr
-                        {goal.entries.length !== 1 ? "ies" : "y"}
+                        {goal?.total_transactions} entr
+                        {goal?.total_transactions !== 1 ? "ies" : "y"}
                       </Text>
                       <Text
                         className="text-xs font-bold"

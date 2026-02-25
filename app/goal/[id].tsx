@@ -163,11 +163,11 @@ export default function GoalDetailScreen() {
                       className="text-base font-semibold text-foreground"
                       numberOfLines={1}
                     >
-                      {item.note ||
-                        (item.type === "add" ? "Added funds" : "Withdrawal")}
+                      {item.remark ||
+                        (item.type === "IN" ? "Added funds" : "Withdrawal")}
                     </Text>
                     <Text className="text-xs text-muted mt-1">
-                      {new Date(item.date).toLocaleDateString("en-US", {
+                      {new Date(item.created_at).toLocaleDateString("en-US", {
                         month: "short",
                         day: "numeric",
                         year: "numeric",
@@ -177,11 +177,10 @@ export default function GoalDetailScreen() {
                   <Text
                     className="text-lg font-bold"
                     style={{
-                      color:
-                        item.type === "add" ? colors.success : colors.error,
+                      color: item.type === "IN" ? colors.success : colors.error,
                     }}
                   >
-                    {item.type === "add" ? "+" : "-"}
+                    {item.type === "IN" ? "+" : "-"}
                     {formatCurrency(item.amount)}
                   </Text>
                 </TouchableOpacity>
