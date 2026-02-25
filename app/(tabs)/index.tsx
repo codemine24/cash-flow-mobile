@@ -1,17 +1,15 @@
 import { useBooks } from "@/api/books";
 import { CreateWalletModal } from "@/components/create-wallet-modal";
 import { ScreenContainer } from "@/components/screen-container";
-import { useColors } from "@/hooks/use-colors";
 import { formatCurrency, formatUpdateDate } from "@/lib/book-utils";
 import { useRouter } from "expo-router";
-import { Book, CornerDownRight, Edit3, MoreVertical, Plus, Trash2, UserPlus } from "lucide-react-native";
+import { Book, CornerDownRight, Edit3, MoreVertical, Trash2, UserPlus } from "lucide-react-native";
 import { useState } from "react";
 import { FlatList, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import Popover from 'react-native-popover-view';
 // import { ScreenContainer } from "react-native-screens";
 
 export default function HomeScreen() {
-  const colors = useColors();
   const router = useRouter();
   const { data: booksData, isLoading } = useBooks();
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -90,7 +88,7 @@ export default function HomeScreen() {
                         <Book size={26} color="#00929A" />
                       </View>
                       <View className="flex-1 mr-4">
-                        <Text className="text-[17px] font-bold text-foreground mb-[2px]" numberOfLines={1}>
+                        <Text className="text-gray-900 font-bold text-[15px]" numberOfLines={1}>
                           {book.name}
                         </Text>
                         <Text className="text-sm text-muted mt-0.5">
@@ -101,7 +99,9 @@ export default function HomeScreen() {
 
                     {/* Right: Amount and Options Menu */}
                     <View className="flex-row items-center">
-                      <Text className="text-sm font-semibold text-primary mr-1">
+                      <Text
+                        className={`text-sm font-semibold mr-1 ${book.balance > 0 ? "text-[#2E7D32]" : "text-[#C62828]"}`}
+                      >
                         {formatCurrency(book.balance)}
                       </Text>
 
@@ -174,19 +174,22 @@ export default function HomeScreen() {
       </ScreenContainer>
 
       {/* Floating Action Button */}
-      <TouchableOpacity
-        onPress={() => setShowCreateModal(true)}
-        className="absolute bottom-10 right-6 w-16 h-16 bg-primary rounded-full items-center justify-center shadow-lg"
+      <View
         style={{
-          shadowColor: colors.primary,
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.3,
-          shadowRadius: 8,
-          elevation: 8,
+          position: "absolute",
+          bottom: 32,
+          right: 16,
         }}
       >
-        <Plus size={24} color="white" />
-      </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => setShowCreateModal(true)}
+          className="bg-primary px-6 py-[14px] rounded-2xl items-center justify-center flex-row shadow-sm"
+        >
+          <Text className="text-white font-bold text-sm tracking-widest text-center">
+            + Add New Wallet
+          </Text>
+        </TouchableOpacity>
+      </View>
 
       {/* Create / Edit Book Modal */}
       <CreateWalletModal
