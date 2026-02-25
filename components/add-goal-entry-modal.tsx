@@ -10,10 +10,11 @@ import {
   Platform,
   ScrollView,
 } from "react-native";
-import { useGoals } from "@/lib/goal-context";
 import { useColors } from "@/hooks/use-colors";
 import { PlusCircle, MinusCircle } from "lucide-react-native";
 import { cn } from "@/lib/utils";
+import Toast from "react-native-toast-message";
+import { useCreateGoalTransaction } from "@/api/goal-transaction";
 
 interface AddGoalEntryModalProps {
   visible: boolean;
@@ -21,17 +22,21 @@ interface AddGoalEntryModalProps {
   onClose: () => void;
 }
 
-type EntryType = "add" | "withdraw";
+type EntryType = "IN" | "OUT";
 
-export function AddGoalEntryModal({ visible, goalId, onClose }: AddGoalEntryModalProps) {
+export function AddGoalEntryModal({
+  visible,
+  goalId,
+  onClose,
+}: AddGoalEntryModalProps) {
   const colors = useColors();
-  const { addEntry } = useGoals();
-  const [entryType, setEntryType] = useState<EntryType>("add");
+  const createGoalTransactionMutation = useCreateGoalTransaction();
+  const [entryType, setEntryType] = useState<EntryType>("IN");
   const [amount, setAmount] = useState("");
-  const [note, setNote] = useState("");
+  const [remark, setRemark] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const isAdd = entryType === "add";
+  const isAdd = entryType === "IN";
 
   const handleSubmit = async () => {
     const parsed = parseFloat(amount);
@@ -41,16 +46,30 @@ export function AddGoalEntryModal({ visible, goalId, onClose }: AddGoalEntryModa
     }
     setIsSubmitting(true);
     try {
-      await addEntry(goalId, {
+      const response: any = await createGoalTransactionMutation.mutateAsync({
+        goal_id: goalId,
         type: entryType,
-        amount: parsed,
-        note: note.trim(),
-        date: new Date().toISOString(),
+        amount: parseFloat(amount),
+        remark,
       });
-      setAmount("");
-      setNote("");
-      setEntryType("add");
-      onClose();
+
+      if (response?.success) {
+        setAmount("");
+        setRemark("");
+        setEntryType("IN");
+        onClose();
+        Toast.show({
+          type: "success",
+          text1: "Success",
+          text2: response?.message,
+        });
+      } else {
+        Toast.show({
+          type: "error",
+          text1: "Error",
+          text2: response.message,
+        });
+      }
     } catch {
       Alert.alert("Error", "Failed to save entry");
     } finally {
@@ -60,8 +79,8 @@ export function AddGoalEntryModal({ visible, goalId, onClose }: AddGoalEntryModa
 
   const handleClose = () => {
     setAmount("");
-    setNote("");
-    setEntryType("add");
+    setRemark("");
+    setEntryType("IN");
     onClose();
   };
 
@@ -85,7 +104,9 @@ export function AddGoalEntryModal({ visible, goalId, onClose }: AddGoalEntryModa
             <ScrollView showsVerticalScrollIndicator={false}>
               {/* Header */}
               <View className="flex-row justify-between items-center mb-6">
-                <Text className="text-2xl font-bold text-foreground">Add Entry</Text>
+                <Text className="text-2xl font-bold text-foreground">
+                  Add Entry
+                </Text>
                 <TouchableOpacity
                   onPress={handleClose}
                   className="w-8 h-8 items-center justify-center"
@@ -97,33 +118,48 @@ export function AddGoalEntryModal({ visible, goalId, onClose }: AddGoalEntryModa
               {/* Type toggle — same pill style as transaction modal */}
               <View className="flex-row gap-3 mb-6 bg-surface rounded-lg p-1 border border-border">
                 <TouchableOpacity
-                  onPress={() => setEntryType("add")}
+                  onPress={() => setEntryType("IN")}
                   className={cn(
                     "flex-1 flex-row items-center justify-center gap-2 py-2 rounded-md",
-                    isAdd ? "bg-primary" : "bg-transparent"
+                    isAdd ? "bg-primary" : "bg-transparent",
                   )}
                 >
                   <PlusCircle size={16} color={isAdd ? "#fff" : colors.muted} />
-                  <Text className={cn("text-sm font-semibold", isAdd ? "text-white" : "text-foreground")}>
+                  <Text
+                    className={cn(
+                      "text-sm font-semibold",
+                      isAdd ? "text-white" : "text-foreground",
+                    )}
+                  >
                     Add Funds
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  onPress={() => setEntryType("withdraw")}
+                  onPress={() => setEntryType("OUT")}
                   className={cn(
                     "flex-1 flex-row items-center justify-center gap-2 py-2 rounded-md",
-                    !isAdd ? "bg-error" : "bg-transparent"
+                    !isAdd ? "bg-error" : "bg-transparent",
                   )}
                 >
-                  <MinusCircle size={16} color={!isAdd ? "#fff" : colors.muted} />
-                  <Text className={cn("text-sm font-semibold", !isAdd ? "text-white" : "text-foreground")}>
+                  <MinusCircle
+                    size={16}
+                    color={!isAdd ? "#fff" : colors.muted}
+                  />
+                  <Text
+                    className={cn(
+                      "text-sm font-semibold",
+                      !isAdd ? "text-white" : "text-foreground",
+                    )}
+                  >
                     Withdraw
                   </Text>
                 </TouchableOpacity>
               </View>
 
               {/* Amount — same large $ style as transaction modal */}
-              <Text className="text-sm font-semibold text-muted mb-2">Amount</Text>
+              <Text className="text-sm font-semibold text-muted mb-2">
+                Amount
+              </Text>
               <View className="flex-row items-center bg-surface rounded-lg px-4 py-3 border border-border mb-6">
                 <Text className="text-2xl font-bold text-primary">$</Text>
                 <TextInput
@@ -139,10 +175,12 @@ export function AddGoalEntryModal({ visible, goalId, onClose }: AddGoalEntryModa
               </View>
 
               {/* Note */}
-              <Text className="text-sm font-semibold text-muted mb-2">Note (optional)</Text>
+              <Text className="text-sm font-semibold text-muted mb-2">
+                Note (optional)
+              </Text>
               <TextInput
-                value={note}
-                onChangeText={setNote}
+                value={remark}
+                onChangeText={setRemark}
                 placeholder="e.g., Monthly savings deposit"
                 placeholderTextColor={colors.muted}
                 className="bg-surface rounded-lg px-4 py-3 border border-border text-foreground mb-8"
@@ -167,7 +205,7 @@ export function AddGoalEntryModal({ visible, goalId, onClose }: AddGoalEntryModa
                       ? "bg-primary/50"
                       : isAdd
                         ? "bg-primary"
-                        : "bg-error"
+                        : "bg-error",
                   )}
                 >
                   <Text className="text-background font-semibold">

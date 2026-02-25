@@ -49,7 +49,8 @@ export function getApiBaseUrl(): string {
   return "";
 }
 
-export const SESSION_TOKEN_KEY = "app_session_token";
+export const ACCESS_TOKEN_KEY = "access_token";
+export const REFRESH_TOKEN_KEY = "refresh_token";
 export const USER_INFO_KEY = "manus-runtime-user-info";
 
 const encodeState = (value: string) => {

@@ -5,12 +5,12 @@ import {
   Text,
   TouchableOpacity,
   TextInput,
-  Alert,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { useBooks } from "@/lib/book-context";
 import { useColors } from "@/hooks/use-colors";
+import { useCreateBook } from "@/api/books";
+import Toast from "react-native-toast-message";
 
 interface CreateBookModalProps {
   visible: boolean;
@@ -19,24 +19,26 @@ interface CreateBookModalProps {
 
 export function CreateBookModal({ visible, onClose }: CreateBookModalProps) {
   const colors = useColors();
-  const { addBook } = useBooks();
   const [bookName, setBookName] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const createBookMutation = useCreateBook();
 
   const handleCreate = async () => {
     if (!bookName.trim()) {
-      Alert.alert("Error", "Please enter a book name");
+      Toast.show({
+        type: "error",
+        text1: "Please enter a book name",
+      });
       return;
     }
-    setIsSubmitting(true);
     try {
-      await addBook(bookName.trim());
+      await createBookMutation.mutateAsync(bookName.trim());
       setBookName("");
       onClose();
     } catch {
-      Alert.alert("Error", "Failed to create book");
-    } finally {
-      setIsSubmitting(false);
+      Toast.show({
+        type: "error",
+        text1: "Failed to create book",
+      });
     }
   };
 
@@ -67,7 +69,9 @@ export function CreateBookModal({ visible, onClose }: CreateBookModalProps) {
           >
             {/* Header */}
             <View className="flex-row justify-between items-center mb-6">
-              <Text className="text-2xl font-bold text-foreground">New Book</Text>
+              <Text className="text-2xl font-bold text-foreground">
+                New Book
+              </Text>
               <TouchableOpacity
                 onPress={handleClose}
                 className="w-8 h-8 items-center justify-center"
@@ -77,7 +81,9 @@ export function CreateBookModal({ visible, onClose }: CreateBookModalProps) {
             </View>
 
             {/* Book name input */}
-            <Text className="text-sm font-semibold text-muted mb-2">Book name</Text>
+            <Text className="text-sm font-semibold text-muted mb-2">
+              Book name
+            </Text>
             <TextInput
               value={bookName}
               onChangeText={setBookName}
@@ -85,7 +91,7 @@ export function CreateBookModal({ visible, onClose }: CreateBookModalProps) {
               placeholderTextColor={colors.muted}
               className="bg-surface rounded-lg px-4 py-3 border border-border text-foreground mb-8"
               autoFocus
-              editable={!isSubmitting}
+              editable={!createBookMutation.isPending}
               onSubmitEditing={handleCreate}
             />
 
@@ -93,18 +99,18 @@ export function CreateBookModal({ visible, onClose }: CreateBookModalProps) {
             <View className="flex-row gap-3">
               <TouchableOpacity
                 onPress={handleClose}
-                disabled={isSubmitting}
+                disabled={createBookMutation.isPending}
                 className="flex-1 bg-surface rounded-lg py-3 border border-border items-center justify-center"
               >
                 <Text className="text-foreground font-semibold">Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleCreate}
-                disabled={isSubmitting}
-                className={`flex-1 rounded-lg py-3 items-center justify-center ${isSubmitting ? "bg-primary/50" : "bg-primary"}`}
+                disabled={createBookMutation.isPending}
+                className={`flex-1 rounded-lg py-3 items-center justify-center ${createBookMutation.isPending ? "bg-primary/50" : "bg-primary"}`}
               >
                 <Text className="text-background font-semibold">
-                  {isSubmitting ? "Creating..." : "Create"}
+                  {createBookMutation.isPending ? "Creating..." : "Create"}
                 </Text>
               </TouchableOpacity>
             </View>

@@ -9,9 +9,12 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Mail, ArrowLeft, ShieldCheck } from "lucide-react-native";
+import Toast from "react-native-toast-message";
+import { useSendOtp, useVerifyOtp } from "@/api/auth";
+import { useAuth } from "@/context/auth-context";
 
 // Two steps on the same screen:
 //   "email"  → user enters their email and taps "Send OTP"
@@ -24,14 +27,21 @@ export default function AuthScreen() {
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
-  const [loading, setLoading] = useState(false);
+
+  const sentOtpMutation = useSendOtp();
+  const verifyOtpMutation = useVerifyOtp();
+  const { setAuthState, authState } = useAuth();
 
   // Animated value for the content sliding between steps
   // Starts at 0 (visible), will slide left to -width on step change
   const slideAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
-  // --- Helpers ---
+  useEffect(() => {
+    if (authState.isAuthenticated) {
+      router.replace("/(tabs)");
+    }
+  }, [authState.isAuthenticated, router]);
 
   // Slide the current content out, then swap the step, then slide new content in
   const animateToStep = (nextStep: Step) => {
@@ -51,24 +61,62 @@ export default function AuthScreen() {
     });
   };
 
-  const handleSendOtp = () => {
+  const handleSendOtp = async () => {
     if (!email.trim()) return;
-    // Simulate a network request with a 1s loading spinner
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      animateToStep("otp"); // move to OTP step
-    }, 1000);
+
+    try {
+      const response: any = await sentOtpMutation.mutateAsync(email);
+      if (response?.success) {
+        Toast.show({
+          type: 'success',
+          text1: response?.message || "OTP sent!",
+        });
+        animateToStep("otp");
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: response?.message || "Failed to send OTP",
+        });
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  const handleVerifyOtp = () => {
-    if (otp.length < 4) return;
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      // Replace the current route so the user can't go back to auth
-      router.replace("/(tabs)");
-    }, 1000);
+  const handleVerifyOtp = async () => {
+    if (otp.length < 6) return;
+
+    try {
+      const response: any = await verifyOtpMutation.mutateAsync({ email, otp });
+
+      if (response?.success) {
+        Toast.show({
+          type: 'success',
+          text1: response?.message || "Verified!",
+        });
+        setAuthState({
+          isAuthenticated: true,
+          user: {
+            id: response?.data?.id,
+            name: response?.data?.name,
+            email: response?.data?.email,
+            contact_number: response?.data?.contact_number,
+            role: response?.data?.role,
+            avatar: response?.data?.avatar,
+            status: response?.data?.status
+          },
+        });
+        router.replace("/(tabs)");
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: response?.message || "Invalid OTP",
+        });
+      }
+    } catch (error) {
+      console.error(error);
+    }
+
   };
 
   return (
@@ -180,7 +228,7 @@ export default function AuthScreen() {
 
                 <TouchableOpacity
                   onPress={handleSendOtp}
-                  disabled={loading || !email.trim()}
+                  disabled={sentOtpMutation.isPending || !email.trim()}
                   activeOpacity={0.85}
                   style={{
                     backgroundColor: email.trim() ? "#22c55e" : "#d1d5db",
@@ -191,7 +239,7 @@ export default function AuthScreen() {
                     marginBottom: 32,
                   }}
                 >
-                  {loading ? (
+                  {sentOtpMutation.isPending ? (
                     <ActivityIndicator color="#fff" />
                   ) : (
                     <Text style={{ fontSize: 16, fontWeight: "700", color: "#ffffff" }}>
@@ -265,10 +313,10 @@ export default function AuthScreen() {
 
                 <TouchableOpacity
                   onPress={handleVerifyOtp}
-                  disabled={loading || otp.length < 4}
+                  disabled={verifyOtpMutation.isPending || otp.length < 6}
                   activeOpacity={0.85}
                   style={{
-                    backgroundColor: otp.length >= 4 ? "#22c55e" : "#d1d5db",
+                    backgroundColor: otp.length >= 6 ? "#22c55e" : "#d1d5db",
                     borderRadius: 14,
                     paddingVertical: 16,
                     alignItems: "center",
@@ -276,7 +324,7 @@ export default function AuthScreen() {
                     marginBottom: 32,
                   }}
                 >
-                  {loading ? (
+                  {verifyOtpMutation.isPending ? (
                     <ActivityIndicator color="#fff" />
                   ) : (
                     <Text style={{ fontSize: 16, fontWeight: "700", color: "#ffffff" }}>
