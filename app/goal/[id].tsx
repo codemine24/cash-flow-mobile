@@ -1,23 +1,29 @@
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
-import { View, Text, ScrollView, TouchableOpacity, FlatList, Alert } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  FlatList,
+  Alert,
+} from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { useGoals } from "@/lib/goal-context";
-import { calculateGoalProgress, calculateGoalSaved, formatCurrency } from "@/lib/goal-utils";
+import { formatCurrency } from "@/lib/goal-utils";
 import { useColors } from "@/hooks/use-colors";
 import { useState } from "react";
 import { AddGoalEntryModal } from "@/components/add-goal-entry-modal";
 import { Plus } from "lucide-react-native";
+import { useGoal } from "@/api/goal";
 
 export default function GoalDetailScreen() {
   // useLocalSearchParams reads the [id] from the URL/route
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { data: goal } = useGoal(id!);
   const router = useRouter();
   const colors = useColors();
-  const { state, deleteEntry } = useGoals();
+  const { deleteEntry } = useGoals();
   const [showAddModal, setShowAddModal] = useState(false);
-
-  // Find this goal from the global state
-  const goal = state.goals.find((g) => g.id === id);
 
   if (!goal) {
     return (
@@ -30,17 +36,18 @@ export default function GoalDetailScreen() {
     );
   }
 
-  const saved = calculateGoalSaved(goal);
-  const progress = calculateGoalProgress(goal);
+  const progress = Math.min(
+    Math.max((goal.data.balance / goal.data.target_amount) * 100, 0),
+    100,
+  );
   const isComplete = progress >= 100;
-  const remaining = Math.max(goal.target - saved, 0);
 
   const handleDeleteEntry = (entryId: string) => {
     Alert.alert("Delete Entry", "Remove this entry?", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Delete",
-        onPress: () => deleteEntry(goal.id, entryId),
+        onPress: () => deleteEntry(goal.data.id, entryId),
         style: "destructive",
       },
     ]);
@@ -49,7 +56,9 @@ export default function GoalDetailScreen() {
   return (
     <>
       {/* Stack.Screen sets the header title for this screen */}
-      <Stack.Screen options={{ title: goal.name, headerBackTitle: "Goals" }} />
+      <Stack.Screen
+        options={{ title: goal.data.name, headerBackTitle: "Goals" }}
+      />
 
       <ScreenContainer className="p-4 bg-background">
         <ScrollView
@@ -64,10 +73,10 @@ export default function GoalDetailScreen() {
               className="text-4xl font-bold text-center mb-1"
               style={{ color: isComplete ? colors.success : colors.primary }}
             >
-              {formatCurrency(saved)}
+              {formatCurrency(goal.data.balance)}
             </Text>
             <Text className="text-sm text-muted text-center mb-5">
-              of {formatCurrency(goal.target)} target
+              of {formatCurrency(goal.data.target_amount)} target
             </Text>
 
             {/* Progress bar */}
@@ -83,50 +92,58 @@ export default function GoalDetailScreen() {
 
             {/* % and remaining */}
             <View className="flex-row justify-between">
-              <Text className="text-sm font-bold" style={{ color: isComplete ? colors.success : colors.primary }}>
+              <Text
+                className="text-sm font-bold"
+                style={{ color: isComplete ? colors.success : colors.primary }}
+              >
                 {progress.toFixed(1)}%
               </Text>
               {!isComplete && (
                 <Text className="text-sm text-muted">
-                  {formatCurrency(remaining)} remaining
+                  {formatCurrency(
+                    Math.max(goal.data.target_amount - goal.data.balance, 0),
+                  )}{" "}
+                  remaining
                 </Text>
               )}
               {isComplete && (
-                <Text className="text-sm font-bold text-success">🎉 Goal reached!</Text>
+                <Text className="text-sm font-bold text-success">
+                  🎉 Goal reached!
+                </Text>
               )}
             </View>
 
             {/* Mini stats row */}
             <View className="flex-row gap-3 mt-5">
               <View className="flex-1 bg-background rounded-lg p-3 border border-border items-center">
-                <Text className="text-xs text-muted font-medium mb-1">Total Added</Text>
+                <Text className="text-xs text-muted font-medium mb-1">
+                  Total Added
+                </Text>
                 <Text className="text-base font-bold text-success">
-                  {formatCurrency(
-                    goal.entries
-                      .filter((e) => e.type === "add")
-                      .reduce((s, e) => s + e.amount, 0)
-                  )}
+                  {formatCurrency(goal.data.in)}
                 </Text>
               </View>
               <View className="flex-1 bg-background rounded-lg p-3 border border-border items-center">
-                <Text className="text-xs text-muted font-medium mb-1">Withdrawn</Text>
+                <Text className="text-xs text-muted font-medium mb-1">
+                  Withdrawn
+                </Text>
                 <Text className="text-base font-bold text-error">
-                  {formatCurrency(
-                    goal.entries
-                      .filter((e) => e.type === "withdraw")
-                      .reduce((s, e) => s + e.amount, 0)
-                  )}
+                  {formatCurrency(goal.data.out)}
                 </Text>
               </View>
             </View>
           </View>
 
           {/* ── Entries list ── */}
-          <Text className="text-xl font-bold text-foreground mb-4">History</Text>
+          <Text className="text-xl font-bold text-foreground mb-4">
+            History
+          </Text>
 
-          {goal.entries.length === 0 ? (
+          {goal.data.transactions.length === 0 ? (
             <View className="bg-surface rounded-xl p-8 items-center justify-center border border-border">
-              <Text className="text-lg font-semibold text-foreground mb-2">No entries yet</Text>
+              <Text className="text-lg font-semibold text-foreground mb-2">
+                No entries yet
+              </Text>
               <Text className="text-sm text-muted text-center">
                 Tap + to add money to this goal
               </Text>
@@ -134,7 +151,7 @@ export default function GoalDetailScreen() {
           ) : (
             <FlatList
               scrollEnabled={false}
-              data={goal.entries}
+              data={goal.data.transactions}
               keyExtractor={(item) => item.id}
               renderItem={({ item }) => (
                 <TouchableOpacity
@@ -142,8 +159,12 @@ export default function GoalDetailScreen() {
                   className="bg-surface rounded-xl p-4 mb-3 border border-border flex-row items-center justify-between active:opacity-70"
                 >
                   <View className="flex-1 mr-4">
-                    <Text className="text-base font-semibold text-foreground" numberOfLines={1}>
-                      {item.note || (item.type === "add" ? "Added funds" : "Withdrawal")}
+                    <Text
+                      className="text-base font-semibold text-foreground"
+                      numberOfLines={1}
+                    >
+                      {item.note ||
+                        (item.type === "add" ? "Added funds" : "Withdrawal")}
                     </Text>
                     <Text className="text-xs text-muted mt-1">
                       {new Date(item.date).toLocaleDateString("en-US", {
@@ -155,7 +176,10 @@ export default function GoalDetailScreen() {
                   </View>
                   <Text
                     className="text-lg font-bold"
-                    style={{ color: item.type === "add" ? colors.success : colors.error }}
+                    style={{
+                      color:
+                        item.type === "add" ? colors.success : colors.error,
+                    }}
                   >
                     {item.type === "add" ? "+" : "-"}
                     {formatCurrency(item.amount)}
@@ -184,7 +208,7 @@ export default function GoalDetailScreen() {
 
       <AddGoalEntryModal
         visible={showAddModal}
-        goalId={goal.id}
+        goalId={goal.data.id}
         onClose={() => setShowAddModal(false)}
       />
     </>
