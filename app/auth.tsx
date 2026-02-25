@@ -16,9 +16,6 @@ import Toast from "react-native-toast-message";
 import { useSendOtp, useVerifyOtp } from "@/api/auth";
 import { useAuth } from "@/context/auth-context";
 
-// Two steps on the same screen:
-//   "email"  → user enters their email and taps "Send OTP"
-//   "otp"    → user enters the 6-digit code and taps "Verify OTP"
 type Step = "email" | "otp";
 
 export default function AuthScreen() {
@@ -32,8 +29,6 @@ export default function AuthScreen() {
   const verifyOtpMutation = useVerifyOtp();
   const { setAuthState, authState } = useAuth();
 
-  // Animated value for the content sliding between steps
-  // Starts at 0 (visible), will slide left to -width on step change
   const slideAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
@@ -43,17 +38,13 @@ export default function AuthScreen() {
     }
   }, [authState.isAuthenticated, router]);
 
-  // Slide the current content out, then swap the step, then slide new content in
   const animateToStep = (nextStep: Step) => {
-    // Phase 1: fade + slide out current content
     Animated.parallel([
       Animated.timing(fadeAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
       Animated.timing(slideAnim, { toValue: -30, duration: 200, useNativeDriver: true }),
     ]).start(() => {
-      // Phase 2: update step (content changes) + reset position instantly
       setStep(nextStep);
-      slideAnim.setValue(30);  // set below so it slides up into view
-      // Phase 3: fade + slide new content in
+      slideAnim.setValue(30);
       Animated.parallel([
         Animated.timing(fadeAnim, { toValue: 1, duration: 250, useNativeDriver: true }),
         Animated.timing(slideAnim, { toValue: 0, duration: 250, useNativeDriver: true }),
@@ -121,20 +112,17 @@ export default function AuthScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      {/* KeyboardAvoidingView shifts content up when the keyboard opens */}
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
       >
         <View style={{ flex: 1, paddingHorizontal: 24 }}>
-
-          {/* ── Back button ── */}
           <TouchableOpacity
             onPress={() => {
               if (step === "otp") {
-                animateToStep("email"); // go back to email step
+                animateToStep("email");
               } else {
-                router.back(); // go back to welcome screen
+                router.back();
               }
             }}
             style={{
@@ -147,8 +135,6 @@ export default function AuthScreen() {
           >
             <ArrowLeft size={22} color="#374151" />
           </TouchableOpacity>
-
-          {/* ── Animated content area ── */}
           <Animated.View
             style={{
               flex: 1,
@@ -157,7 +143,6 @@ export default function AuthScreen() {
               paddingTop: 40,
             }}
           >
-            {/* Step indicator dots */}
             <View style={{ flexDirection: "row", gap: 6, marginBottom: 32 }}>
               <View
                 style={{
@@ -178,7 +163,6 @@ export default function AuthScreen() {
             </View>
 
             {step === "email" ? (
-              // ─── Email Step ───
               <>
                 <View
                   style={{
@@ -252,7 +236,6 @@ export default function AuthScreen() {
                 </TouchableOpacity>
               </>
             ) : (
-              // ─── OTP Step ───
               <>
                 <View
                   style={{
