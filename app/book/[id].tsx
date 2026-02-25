@@ -19,10 +19,18 @@ import Toast from "react-native-toast-message";
 export default function BookDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { data: book } = useBook(id!);
+  const { data: book, isLoading } = useBook(id!);
   const deleteTransaction = useDeleteTransaction();
   const [showAddModal, setShowAddModal] = useState(false);
   const [defaultType, setDefaultType] = useState<"IN" | "OUT">("OUT");
+
+  if (isLoading) {
+    return (
+      <View className="bg-surface rounded-xl p-8 items-center justify-center border border-border">
+        <Text className="text-muted">Loading...</Text>
+      </View>
+    );
+  }
 
   if (!book) {
     return (
@@ -67,9 +75,8 @@ export default function BookDetailScreen() {
               Current Balance
             </Text>
             <Text
-              className={`text-4xl font-bold text-center mb-6 ${
-                book.data.balance >= 0 ? "text-success" : "text-error"
-              }`}
+              className={`text-4xl font-bold text-center mb-6 ${book.data.balance >= 0 ? "text-success" : "text-error"
+                }`}
             >
               {formatCurrency(book.data.balance)}
             </Text>
@@ -134,9 +141,8 @@ export default function BookDetailScreen() {
                       </Text>
                     </View>
                     <Text
-                      className={`text-lg font-bold ${
-                        item.type === "IN" ? "text-success" : "text-error"
-                      }`}
+                      className={`text-lg font-bold ${item.type === "IN" ? "text-success" : "text-error"
+                        }`}
                     >
                       {item.type === "IN" ? "+" : "-"}
                       {formatCurrency(item.amount)}
