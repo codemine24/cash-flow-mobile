@@ -1,11 +1,11 @@
 import { Tabs } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { BarChart2, Settings, Target, Wallet } from "lucide-react-native";
 import { Platform } from "react-native";
-import { Home, Target, BarChart2, Settings } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { HapticTab } from "@/components/haptic-tab";
-import { useColors } from "@/hooks/use-colors";
 import PrivateRoute from "@/components/private-route";
+import { useColors } from "@/hooks/use-colors";
 
 export default function TabLayout() {
   const colors = useColors();
@@ -34,8 +34,8 @@ export default function TabLayout() {
         <Tabs.Screen
           name="index"
           options={{
-            title: "Home",
-            tabBarIcon: ({ color, size }) => <Home color={color} size={size} />,
+            title: "Wallets",
+            tabBarIcon: ({ color, size }) => <Wallet color={color} size={size} />,
           }}
         />
 

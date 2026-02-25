@@ -1,14 +1,16 @@
-import { ScrollView, Text, View, TouchableOpacity, Alert } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { useRouter } from "expo-router";
 import {
-  Settings,
-  User,
-  Lock,
+  ChevronRight,
   Info,
   LogOut,
-  ChevronRight,
+  Settings,
+  User
 } from "lucide-react-native";
+import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
+
+import { logout as apiLogout } from "@/lib/_core/api";
+import { clearUserInfo, removeAccessToken } from "@/lib/_core/auth";
 
 // ─── Reusable row component ───────────────────────────────────────────────
 function SettingsRow({
@@ -75,7 +77,21 @@ export default function SettingsScreen() {
       {
         text: "Log Out",
         style: "destructive",
-        onPress: () => router.replace("/"),
+        onPress: async () => {
+          try {
+            // Optional: Call the backend API to invalidate session/cookie
+            await apiLogout().catch(() => console.warn("API logout failed"));
+
+            // Clear local tokens and user info using the app's auth helpers
+            await removeAccessToken();
+            await clearUserInfo();
+
+            // Redirect user to the login/home screen
+            router.replace("/");
+          } catch (error) {
+            console.error("Logout failed:", error);
+          }
+        },
       },
     ]);
   };
@@ -108,14 +124,6 @@ export default function SettingsScreen() {
             title="Your Profile"
             subtitle="Name, Avatar, Email"
             onPress={() => router.push("/settings/profile" as any)}
-          />
-          <Divider />
-          <SettingsRow
-            iconBg="#dcfce7"
-            icon={<Lock size={22} color="#16a34a" />}
-            title="Change Password"
-            subtitle="Update your password"
-            onPress={() => router.push("/settings/change-password" as any)}
           />
           <Divider />
           <SettingsRow
