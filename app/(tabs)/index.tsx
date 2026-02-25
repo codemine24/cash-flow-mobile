@@ -91,7 +91,7 @@ export default function HomeScreen() {
                           {book.name}
                         </Text>
                         <Text className="text-sm text-muted mt-0.5">
-                          {formatUpdateDate((book as any).updated_at || (book as any).updatedAt)}
+                          {formatUpdateDate(book.updated_at)}
                         </Text>
                       </View>
                     </View>

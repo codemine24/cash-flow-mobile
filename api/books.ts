@@ -1,6 +1,18 @@
 import apiClient from "@/lib/api-client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+export interface BookData {
+  id: string;
+  name: string;
+  balance: number;
+  in: number;
+  out: number;
+  role: string;
+  created_at: string;
+  updated_at: string;
+  others_member: any[];
+}
+
 const BOOK_API_URL = "/book";
 const keys = {
   all: ["books"],
@@ -11,7 +23,7 @@ const keys = {
 export const useBooks = () => {
   return useQuery({
     queryKey: keys.list(),
-    queryFn: async () => {
+    queryFn: async (): Promise<{ data: BookData[] } | undefined> => {
       try {
         const response = await apiClient.get(BOOK_API_URL);
         return response;
