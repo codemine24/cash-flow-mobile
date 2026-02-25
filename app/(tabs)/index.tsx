@@ -1,11 +1,11 @@
-import { ScrollView, Text, View, TouchableOpacity, FlatList } from "react-native";
+import { ScrollView, Text, View, TouchableOpacity, FlatList, Modal, Pressable } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { useState } from "react";
 import { CreateBookModal } from "@/components/create-book-modal";
 import { useColors } from "@/hooks/use-colors";
 import { formatCurrency } from "@/lib/book-utils";
 import { useRouter } from "expo-router";
-import { Plus } from "lucide-react-native";
+import { Book, Edit3, MoreVertical, Plus, Trash2, UserPlus } from "lucide-react-native";
 import { useBooks } from "@/api/books";
 
 export default function HomeScreen() {
@@ -13,20 +13,19 @@ export default function HomeScreen() {
   const router = useRouter();
   const { data: booksData, isLoading } = useBooks();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [activeMenuBook, setActiveMenuBook] = useState<{ id: string; name: string } | null>(null);
 
   const handleDeleteBook = (bookId: string, bookName: string) => {
-    // Alert.alert(
-    //   "Delete Book",
-    //   `Are you sure you want to delete "${bookName}"? This cannot be undone.`,
-    //   [
-    //     { text: "Cancel", style: "cancel" },
-    //     {
-    //       text: "Delete",
-    //       onPress: () => deleteBook(bookId),
-    //       style: "destructive",
-    //     },
-    //   ]
-    // );
+    // Add real delete logic here later
+    setActiveMenuBook(null);
+  };
+
+  const handleRename = () => {
+    setActiveMenuBook(null);
+  };
+
+  const handleAddMember = () => {
+    setActiveMenuBook(null);
   };
 
   return (
@@ -46,15 +45,15 @@ export default function HomeScreen() {
             </View>
           ) : booksData?.data?.length === 0 ? (
             <View className="bg-surface rounded-xl p-8 items-center justify-center border border-border">
-              <Text className="text-lg font-semibold text-foreground mb-2">No books yet</Text>
+              <Text className="text-lg font-semibold text-foreground mb-2">No wallets yet</Text>
               <Text className="text-sm text-muted text-center mb-4">
-                Create your first book to start tracking expenses
+                Create your first wallet to start tracking expenses
               </Text>
               <TouchableOpacity
                 onPress={() => setShowCreateModal(true)}
                 className="bg-primary rounded-lg px-6 py-2"
               >
-                <Text className="text-white font-semibold">Create Book</Text>
+                <Text className="text-white font-semibold">Create Wallet</Text>
               </TouchableOpacity>
             </View>
           ) : (
@@ -66,46 +65,45 @@ export default function HomeScreen() {
                 return (
                   <TouchableOpacity
                     onPress={() => router.push({ pathname: "/book/[id]", params: { id: book.id } } as any)}
-                    onLongPress={() => handleDeleteBook(book.id, book.name)}
-                    className="bg-surface rounded-xl p-4 mb-4 border border-border active:opacity-70"
+                    className="bg-surface rounded-xl p-4 mb-4 border border-border active:opacity-70 flex-row items-center justify-between"
                   >
-                    <View className="flex-row items-center justify-between mb-3">
-                      <Text className="text-lg font-bold text-foreground flex-1">
-                        {book.name}
-                      </Text>
-                      <Text className="text-sm text-muted">
-                        {/* {book.transactions.length} transaction{book.transactions.length !== 1 ? "s" : ""} */}
-                      </Text>
-                    </View>
-
-                    {/* Balance Summary */}
-                    <View className="flex-row gap-3">
-                      <View className="flex-1 bg-background rounded-lg p-3 border border-border">
-                        <Text className="text-xs text-muted font-medium mb-1">In</Text>
-                        <Text className="text-lg font-bold text-success">
-                          {formatCurrency(book.in)}
-                        </Text>
+                    {/* Left: Icon and Name/Date */}
+                    <View className="flex-row items-center flex-1">
+                      <View
+                        style={{
+                          width: 52,
+                          height: 52,
+                          borderRadius: 14,
+                          backgroundColor: "rgba(0, 146, 154, 0.1)",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          marginRight: 16,
+                        }}
+                      >
+                        <Book size={26} color="#00929A" />
                       </View>
-                      <View className="flex-1 bg-background rounded-lg p-3 border border-border">
-                        <Text className="text-xs text-muted font-medium mb-1">Out</Text>
-                        <Text className="text-lg font-bold text-error">
-                          {formatCurrency(book.out)}
+                      <View className="flex-1 mr-4">
+                        <Text className="text-[17px] font-bold text-foreground mb-[2px]" numberOfLines={1}>
+                          {book.name}
                         </Text>
-                      </View>
-                      <View className="flex-1 bg-background rounded-lg p-3 border border-border">
-                        <Text className="text-xs text-muted font-medium mb-1">Balance</Text>
-                        <Text
-                          className={`text-lg font-bold ${book.balance >= 0 ? "text-success" : "text-error"
-                            }`}
-                        >
-                          {formatCurrency(book.balance)}
+                        <Text className="text-[13px] text-muted">
+                          Updated 3 hours ago
                         </Text>
                       </View>
                     </View>
 
-                    <Text className="text-xs text-muted mt-3">
-                      Long press to delete
-                    </Text>
+                    {/* Right: Amount and Options Menu */}
+                    <View className="flex-row items-center">
+                      <Text className="text-[17px] font-bold text-[#00929A] mr-3">
+                        {formatCurrency(book.balance)}
+                      </Text>
+                      <TouchableOpacity
+                        onPress={() => setActiveMenuBook({ id: book.id, name: book.name })}
+                        className="py-2 pl-2 rounded-full"
+                      >
+                        <MoreVertical size={20} color="#6b7280" />
+                      </TouchableOpacity>
+                    </View>
                   </TouchableOpacity>
                 );
               }}
@@ -131,6 +129,56 @@ export default function HomeScreen() {
 
       {/* Create Book Modal */}
       <CreateBookModal visible={showCreateModal} onClose={() => setShowCreateModal(false)} />
+
+      {/* Options Menu Modal */}
+      {activeMenuBook && (
+        <Modal
+          visible={!!activeMenuBook}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setActiveMenuBook(null)}
+        >
+          <Pressable
+            style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' }}
+            onPress={() => setActiveMenuBook(null)}
+          >
+            <Pressable
+              className="bg-surface w-[80%] rounded-2xl overflow-hidden shadow-lg border border-border"
+              onPress={(e) => e.stopPropagation()}
+            >
+              <View className="px-5 py-4 border-b border-border/50">
+                <Text className="text-lg font-bold text-foreground text-center" numberOfLines={1}>
+                  {activeMenuBook.name}
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                onPress={handleRename}
+                className="flex-row items-center px-6 py-4 border-b border-border/50"
+              >
+                <Edit3 size={20} color={colors.text} />
+                <Text className="ml-4 text-[16px] font-medium text-foreground">Rename</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={handleAddMember}
+                className="flex-row items-center px-6 py-4 border-b border-border/50"
+              >
+                <UserPlus size={20} color={colors.text} />
+                <Text className="ml-4 text-[16px] font-medium text-foreground">Add member</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => handleDeleteBook(activeMenuBook.id, activeMenuBook.name)}
+                className="flex-row items-center px-6 py-4 bg-red-50/30"
+              >
+                <Trash2 size={20} color="#ef4444" />
+                <Text className="ml-4 text-[16px] font-medium text-error flex-1">Delete</Text>
+              </TouchableOpacity>
+            </Pressable>
+          </Pressable>
+        </Modal>
+      )}
     </>
   );
 }
