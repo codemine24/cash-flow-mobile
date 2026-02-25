@@ -40,9 +40,18 @@ export const useGoal = (id: string) => {
 export const useCreateGoal = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (name: string) => {
+    mutationFn: async ({
+      name,
+      target_amount,
+    }: {
+      name: string;
+      target_amount: number;
+    }) => {
       try {
-        const response = await apiClient.post(GOAL_API_URL, { name });
+        const response = await apiClient.post(GOAL_API_URL, {
+          name,
+          target_amount,
+        });
         return response;
       } catch (error) {
         console.log(error);

@@ -5,7 +5,6 @@ import {
   Text,
   TouchableOpacity,
   TextInput,
-  Alert,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
@@ -21,7 +20,7 @@ interface CreateBookModalProps {
 export function CreateBookModal({ visible, onClose }: CreateBookModalProps) {
   const colors = useColors();
   const [bookName, setBookName] = useState("");
-  const createBookMutation = useCreateBook()
+  const createBookMutation = useCreateBook();
 
   const handleCreate = async () => {
     if (!bookName.trim()) {
@@ -70,7 +69,9 @@ export function CreateBookModal({ visible, onClose }: CreateBookModalProps) {
           >
             {/* Header */}
             <View className="flex-row justify-between items-center mb-6">
-              <Text className="text-2xl font-bold text-foreground">New Book</Text>
+              <Text className="text-2xl font-bold text-foreground">
+                New Book
+              </Text>
               <TouchableOpacity
                 onPress={handleClose}
                 className="w-8 h-8 items-center justify-center"
@@ -80,7 +81,9 @@ export function CreateBookModal({ visible, onClose }: CreateBookModalProps) {
             </View>
 
             {/* Book name input */}
-            <Text className="text-sm font-semibold text-muted mb-2">Book name</Text>
+            <Text className="text-sm font-semibold text-muted mb-2">
+              Book name
+            </Text>
             <TextInput
               value={bookName}
               onChangeText={setBookName}

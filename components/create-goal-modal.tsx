@@ -9,8 +9,8 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { useGoals } from "@/lib/goal-context";
 import { useColors } from "@/hooks/use-colors";
+import { useCreateGoal } from "@/api/goal";
 
 interface CreateGoalModalProps {
   visible: boolean;
@@ -19,7 +19,7 @@ interface CreateGoalModalProps {
 
 export function CreateGoalModal({ visible, onClose }: CreateGoalModalProps) {
   const colors = useColors();
-  const { addGoal } = useGoals();
+  const createGoalMutation = useCreateGoal();
   const [name, setName] = useState("");
   const [target, setTarget] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -36,7 +36,14 @@ export function CreateGoalModal({ visible, onClose }: CreateGoalModalProps) {
     }
     setIsSubmitting(true);
     try {
-      await addGoal(name.trim(), targetAmount);
+      console.log("Creating goal", {
+        name: name.trim(),
+        target_amount: targetAmount,
+      });
+      await createGoalMutation.mutateAsync({
+        name: name.trim(),
+        target_amount: targetAmount,
+      });
       setName("");
       setTarget("");
       onClose();
@@ -71,7 +78,9 @@ export function CreateGoalModal({ visible, onClose }: CreateGoalModalProps) {
           >
             {/* Header */}
             <View className="flex-row justify-between items-center mb-6">
-              <Text className="text-2xl font-bold text-foreground">New Goal</Text>
+              <Text className="text-2xl font-bold text-foreground">
+                New Goal
+              </Text>
               <TouchableOpacity
                 onPress={handleClose}
                 className="w-8 h-8 items-center justify-center"
@@ -81,7 +90,9 @@ export function CreateGoalModal({ visible, onClose }: CreateGoalModalProps) {
             </View>
 
             {/* Goal name */}
-            <Text className="text-sm font-semibold text-muted mb-2">Goal name</Text>
+            <Text className="text-sm font-semibold text-muted mb-2">
+              Goal name
+            </Text>
             <TextInput
               value={name}
               onChangeText={setName}
@@ -93,7 +104,9 @@ export function CreateGoalModal({ visible, onClose }: CreateGoalModalProps) {
             />
 
             {/* Target amount */}
-            <Text className="text-sm font-semibold text-muted mb-2">Target amount</Text>
+            <Text className="text-sm font-semibold text-muted mb-2">
+              Target amount
+            </Text>
             <View className="flex-row items-center bg-surface rounded-lg px-4 py-3 border border-border mb-8">
               <Text className="text-2xl font-bold text-primary">$</Text>
               <TextInput

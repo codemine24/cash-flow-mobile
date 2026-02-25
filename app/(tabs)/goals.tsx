@@ -21,8 +21,6 @@ export default function GoalsScreen() {
   const { data: goalsData, isLoading } = useGoals();
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  console.log(goalsData?.data);
-
   const handleDeleteGoal = (goalId: string, goalName: string) => {
     Alert.alert("Delete Goal", `Delete "${goalName}"? This cannot be undone.`, [
       { text: "Cancel", style: "cancel" },
