@@ -35,12 +35,18 @@ const keys = {
   detail: (id: string) => [...keys.all, "detail", id],
 }
 
-export const useBooks = () => {
+export const useBooks = (searchParams: { search?: string, sort?: string, sort_order?: string } = {}) => {
+  // Filter out empty/undefined params
+  const params: Record<string, string> = {};
+  if (searchParams.search) params.search_term = searchParams.search;
+  if (searchParams.sort) params.sort = searchParams.sort;
+  if (searchParams.sort_order) params.sort_order = searchParams.sort_order;
+
   return useQuery({
-    queryKey: keys.list(),
+    queryKey: [...keys.list(), params],
     queryFn: async (): Promise<{ data: BookData[] } | undefined> => {
       try {
-        const response = await apiClient.get(BOOK_API_URL);
+        const response = await apiClient.get(BOOK_API_URL, { params });
         return response;
       } catch (error) {
         console.log(error);
