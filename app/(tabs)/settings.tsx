@@ -125,7 +125,16 @@ export default function SettingsScreen() {
         {/* ── Logout ── */}
         <View className="bg-surface rounded-2xl border border-border px-4">
           <TouchableOpacity
-            onPress={handleLogout}
+            onPress={() =>
+              Alert.alert(
+                "Log Out",
+                "Are you sure you want to log out?",
+                [
+                  { text: "Cancel", style: "cancel" },
+                  { text: "Log Out", style: "destructive", onPress: handleLogout },
+                ]
+              )
+            }
             activeOpacity={0.7}
             className="flex-row items-center py-4 gap-3"
           >
