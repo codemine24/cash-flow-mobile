@@ -137,7 +137,7 @@ export default function BookDetailScreen() {
       {/* <ScreenContainer className="px-4"> */}
       <ScrollView
         showsVerticalScrollIndicator={false}
-        // contentContainerStyle={{ paddingBottom: 100 }}
+        contentContainerStyle={{ paddingBottom: 100 }}
         className="px-4"
       >
         {/* Header Card */}

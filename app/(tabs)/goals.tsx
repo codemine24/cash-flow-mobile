@@ -34,7 +34,7 @@ export default function GoalsScreen() {
 
   return (
     <>
-      <ScreenContainer className="p-4 bg-background">
+      <ScreenContainer edges={["left", "right"]} className="p-4 bg-background">
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 100 }}
