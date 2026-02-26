@@ -62,7 +62,7 @@ export default function HomeScreen() {
 
   return (
     <>
-      <ScreenContainer className="p-4 bg-background">
+      <ScreenContainer edges={["left", "right"]} className="p-4 bg-background">
         <ScrollView showsVerticalScrollIndicator={false}>
           {/* Header */}
           <View className="mb-6 flex-row items-center justify-between">

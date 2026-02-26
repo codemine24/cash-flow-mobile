@@ -84,7 +84,7 @@ export default function SettingsScreen() {
   };
 
   return (
-    <ScreenContainer className="bg-background">
+    <ScreenContainer edges={["left", "right"]} className="bg-background">
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 40 }}
