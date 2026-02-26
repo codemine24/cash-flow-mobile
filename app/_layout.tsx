@@ -102,6 +102,8 @@ export default function RootLayout() {
                 <Stack.Screen name="(tabs)" />
                 <Stack.Screen name="goal/[id]" options={{ headerShown: true }} />
                 <Stack.Screen name="book/[id]" options={{ headerShown: true }} />
+                <Stack.Screen name="book/add-transaction" options={{ headerShown: true }} />
+                <Stack.Screen name="search-wallet" options={{ headerShown: true, title: "" }} />
                 <Stack.Screen name="settings/app-settings" options={{ headerShown: true }} />
                 <Stack.Screen name="settings/profile" options={{ headerShown: true }} />
                 <Stack.Screen name="settings/change-password" options={{ headerShown: true }} />

@@ -1,6 +1,5 @@
 import { useBook } from "@/api/books";
 import { useDeleteTransaction } from "@/api/transaction";
-import { AddTransactionModal } from "@/components/add-transaction-modal";
 import { ScreenContainer } from "@/components/screen-container";
 
 import { formatCurrency } from "@/lib/book-utils";
@@ -23,12 +22,8 @@ export default function BookDetailScreen() {
   const router = useRouter();
   const { data: book, isLoading } = useBook(id!);
   const deleteTransaction = useDeleteTransaction();
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [defaultType, setDefaultType] = useState<"IN" | "OUT">("OUT");
-  const [editingTransaction, setEditingTransaction] = useState<any>(null);
-  const [activeMenuTransaction, setActiveMenuTransaction] = useState<string | null>(null);
 
-  console.log("book.......", JSON.stringify(book?.data, null, 2));
+  const [activeMenuTransaction, setActiveMenuTransaction] = useState<string | null>(null);
 
   const groupedTransactions = useMemo(() => {
     if (!book?.data?.transactions) return [];
@@ -121,8 +116,17 @@ export default function BookDetailScreen() {
 
   const handleEditTransaction = (item: any) => {
     setActiveMenuTransaction(null);
-    setEditingTransaction(item);
-    setShowAddModal(true);
+    router.push({
+      pathname: "/book/add-transaction",
+      params: {
+        bookId: id,
+        type: item.type,
+        editId: item.id,
+        editAmount: item.amount?.toString(),
+        editRemark: item.remark || "",
+        editType: item.type,
+      },
+    });
   };
 
   return (
@@ -292,8 +296,10 @@ export default function BookDetailScreen() {
       >
         <TouchableOpacity
           onPress={() => {
-            setDefaultType("IN");
-            setShowAddModal(true);
+            router.push({
+              pathname: "/book/add-transaction",
+              params: { bookId: id, type: "IN" },
+            });
           }}
           className="rounded-2xl"
           style={{
@@ -318,8 +324,10 @@ export default function BookDetailScreen() {
 
         <TouchableOpacity
           onPress={() => {
-            setDefaultType("OUT");
-            setShowAddModal(true);
+            router.push({
+              pathname: "/book/add-transaction",
+              params: { bookId: id, type: "OUT" },
+            });
           }}
           className="rounded-2xl"
           style={{
@@ -342,17 +350,6 @@ export default function BookDetailScreen() {
           </Text>
         </TouchableOpacity>
       </View>
-
-      <AddTransactionModal
-        visible={showAddModal}
-        onClose={() => {
-          setShowAddModal(false);
-          setEditingTransaction(null);
-        }}
-        bookId={book.data.id}
-        initialType={defaultType}
-        editTransaction={editingTransaction}
-      />
     </>
   );
 }

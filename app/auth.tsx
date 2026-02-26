@@ -126,7 +126,7 @@ export default function AuthScreen() {
               if (step === "otp") {
                 animateToStep("email");
               } else {
-                router.back();
+                router.replace("/");
               }
             }}
             style={{

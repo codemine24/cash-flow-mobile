@@ -11,6 +11,7 @@ import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 import { logout as apiLogout } from "@/lib/_core/api";
 import { clearUserInfo, removeAccessToken } from "@/lib/_core/auth";
+import { useAuth } from "@/context/auth-context";
 
 // ─── Reusable row component ───────────────────────────────────────────────
 function SettingsRow({
@@ -70,30 +71,16 @@ function Divider() {
 // ─── Main screen ─────────────────────────────────────────────────────────
 export default function SettingsScreen() {
   const router = useRouter();
+  const { setAuthState } = useAuth();
 
-  const handleLogout = () => {
-    Alert.alert("Log Out", "Are you sure you want to log out?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Log Out",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            // Optional: Call the backend API to invalidate session/cookie
-            await apiLogout().catch(() => console.warn("API logout failed"));
+  const handleLogout = async () => {
+    // Clear local tokens and user info using the app's auth helpers
+    await removeAccessToken();
+    await clearUserInfo();
+    setAuthState({ isAuthenticated: false, user: null });
 
-            // Clear local tokens and user info using the app's auth helpers
-            await removeAccessToken();
-            await clearUserInfo();
-
-            // Redirect user to the login/home screen
-            router.replace("/");
-          } catch (error) {
-            console.error("Logout failed:", error);
-          }
-        },
-      },
-    ]);
+    // Redirect user to the login screen
+    router.replace("/auth" as any);
   };
 
   return (
