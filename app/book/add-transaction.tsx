@@ -53,8 +53,10 @@ export default function AddTransactionScreen() {
   }, []);
 
   useEffect(() => {
-    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
-    const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+    const showEvent =
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent =
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
 
     const showSub = Keyboard.addListener(showEvent, (e) => {
       setKeyboardHeight(e.endCoordinates.height);
@@ -216,7 +218,7 @@ export default function AddTransactionScreen() {
                     >
                       <Text className="text-2xl mb-1">{category.icon}</Text>
                       <Text
-                        style={{ color: isSelected ? '#2563EB' : '#111827' }}
+                        style={{ color: isSelected ? "#2563EB" : "#111827" }}
                         className="text-xs font-medium text-center"
                       >
                         {category.name}

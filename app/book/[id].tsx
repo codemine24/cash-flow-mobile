@@ -6,16 +6,10 @@ import { formatCurrency } from "@/lib/book-utils";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 
 import { useMemo, useState } from "react";
-import {
-  Alert,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import Toast from "react-native-toast-message";
-import Popover from 'react-native-popover-view';
-import { MoreVertical, Edit3, Trash2, MoreHorizontal } from "lucide-react-native";
+import Popover from "react-native-popover-view";
+import { Edit3, Trash2, MoreHorizontal } from "lucide-react-native";
 
 export default function BookDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -23,19 +17,23 @@ export default function BookDetailScreen() {
   const { data: book, isLoading } = useBook(id!);
   const deleteTransaction = useDeleteTransaction();
 
-  const [activeMenuTransaction, setActiveMenuTransaction] = useState<string | null>(null);
+  const [activeMenuTransaction, setActiveMenuTransaction] = useState<
+    string | null
+  >(null);
 
   const groupedTransactions = useMemo(() => {
     if (!book?.data?.transactions) return [];
 
     const sorted = [...book.data.transactions].sort(
-      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
     );
 
     let runningBalance = book.data.balance;
     const annotated = sorted.map((t) => {
       const current = runningBalance;
-      const amountValue = typeof t.amount === 'string' ? parseFloat(t.amount) : t.amount;
+      const amountValue =
+        typeof t.amount === "string" ? parseFloat(t.amount) : t.amount;
       if (t.type === "IN") {
         runningBalance -= amountValue;
       } else {
@@ -95,7 +93,9 @@ export default function BookDetailScreen() {
           text: "Delete",
           style: "destructive",
           onPress: async () => {
-            const res: any = await deleteTransaction.mutateAsync([transactionId]);
+            const res: any = await deleteTransaction.mutateAsync([
+              transactionId,
+            ]);
 
             if (res?.success) {
               Toast.show({
@@ -110,7 +110,7 @@ export default function BookDetailScreen() {
             }
           },
         },
-      ]
+      ],
     );
   };
 
@@ -143,20 +143,26 @@ export default function BookDetailScreen() {
         {/* Header Card */}
         <View className="bg-white mt-4 rounded-2xl mb-6 shadow-sm border border-border">
           <View className="px-4 py-4 flex-row justify-between items-center border-b border-border">
-            <Text className="text-gray-900 font-bold text-[15px]">Net Balance</Text>
+            <Text className="text-gray-900 font-bold text-[15px]">
+              Net Balance
+            </Text>
             <Text className="text-gray-900 font-bold text-[15px]">
               {formatCurrency(book.data.balance)}
             </Text>
           </View>
           <View className="px-4 py-4">
             <View className="flex-row justify-between items-center mb-3">
-              <Text className="text-gray-900 font-bold text-[13px]">Total In (+)</Text>
+              <Text className="text-gray-900 font-bold text-[13px]">
+                Total In (+)
+              </Text>
               <Text className="text-[#2E7D32] font-semibold text-[13px]">
                 {formatCurrency(book.data.in)}
               </Text>
             </View>
             <View className="flex-row justify-between items-center">
-              <Text className="text-gray-900 font-bold text-[13px]">Total Out (-)</Text>
+              <Text className="text-gray-900 font-bold text-[13px]">
+                Total Out (-)
+              </Text>
               <Text className="text-[#C62828] font-semibold text-[13px]">
                 {formatCurrency(book.data.out)}
               </Text>
@@ -198,8 +204,11 @@ export default function BookDetailScreen() {
                 {group.data.map((item, index) => (
                   <View
                     key={item.id}
-                    className={`rounded-2xl mt-4 px-4 py-4 flex-row justify-between bg-white ${index !== group.data.length - 1 ? "border-b border-border" : ""
-                      }`}
+                    className={`rounded-2xl mt-4 px-4 py-4 flex-row justify-between bg-white ${
+                      index !== group.data.length - 1
+                        ? "border-b border-border"
+                        : ""
+                    }`}
                   >
                     <View className="flex-1 mr-2 ">
                       <View className="flex-row items-center justify-between mb-2">
@@ -215,16 +224,21 @@ export default function BookDetailScreen() {
                       </Text>
                       <Text className="text-sm text-gray-500">
                         Added on{" "}
-                        {new Date(item.created_at).toLocaleTimeString("en-US", {
-                          hour: "numeric",
-                          minute: "2-digit",
-                        }).toLowerCase()}
+                        {new Date(item.created_at)
+                          .toLocaleTimeString("en-US", {
+                            hour: "numeric",
+                            minute: "2-digit",
+                          })
+                          .toLowerCase()}
                       </Text>
                     </View>
                     <View className="items-end ">
                       <Text
-                        className={`text-sm font-bold mb-1 ${item.type === "IN" ? "text-[#2E7D32]" : "text-[#C62828]"
-                          }`}
+                        className={`text-sm font-bold mb-1 ${
+                          item.type === "IN"
+                            ? "text-[#2E7D32]"
+                            : "text-[#C62828]"
+                        }`}
                       >
                         {formatCurrency(item.amount)}
                       </Text>
@@ -235,16 +249,23 @@ export default function BookDetailScreen() {
                       <Popover
                         isVisible={activeMenuTransaction === item.id}
                         onRequestClose={() => setActiveMenuTransaction(null)}
-                        from={(
+                        from={
                           <TouchableOpacity
                             onPress={() => setActiveMenuTransaction(item.id)}
                             className="p-1 items-center justify-center -mr-1"
                           >
                             <MoreHorizontal size={18} color="#9CA3AF" />
                           </TouchableOpacity>
-                        )}
-                        backgroundStyle={{ backgroundColor: 'rgba(0, 0, 0, 0.4)' }}
-                        popoverStyle={{ borderRadius: 12, padding: 4, width: 160, backgroundColor: 'white' }}
+                        }
+                        backgroundStyle={{
+                          backgroundColor: "rgba(0, 0, 0, 0.4)",
+                        }}
+                        popoverStyle={{
+                          borderRadius: 12,
+                          padding: 4,
+                          width: 160,
+                          backgroundColor: "white",
+                        }}
                       >
                         <View>
                           <TouchableOpacity
@@ -252,19 +273,22 @@ export default function BookDetailScreen() {
                             onPress={() => handleEditTransaction(item)}
                           >
                             <Edit3 size={18} color="#374151" />
-                            <Text className="text-gray-700 ml-3 font-medium">Edit</Text>
+                            <Text className="text-gray-700 ml-3 font-medium">
+                              Edit
+                            </Text>
                           </TouchableOpacity>
                           <TouchableOpacity
                             className="flex-row items-center px-4 py-3"
                             onPress={() => handleDeleteTransaction(item.id)}
                           >
                             <Trash2 size={18} color="#EF4444" />
-                            <Text className="text-red-500 ml-3 font-medium">Delete</Text>
+                            <Text className="text-red-500 ml-3 font-medium">
+                              Delete
+                            </Text>
                           </TouchableOpacity>
                         </View>
                       </Popover>
                     </View>
-
                   </View>
                 ))}
               </View>
