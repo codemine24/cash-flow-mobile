@@ -13,6 +13,8 @@ interface goalTransactionRequest {
   type: string;
   amount: number;
   remark?: string;
+  date?: string;
+  time?: string;
 }
 
 export const useGoalTransactions = () => {

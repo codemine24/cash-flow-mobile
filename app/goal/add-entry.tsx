@@ -10,53 +10,30 @@ import {
   Keyboard,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { useCreateTransaction, useUpdateTransaction } from "@/api/transaction";
+import { useCreateGoalTransaction } from "@/api/goal-transaction";
 import Toast from "react-native-toast-message";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { useColors } from "@/hooks/use-colors";
 
-const EXPENSE_CATEGORIES = [
-  { id: "food", name: "Food", icon: "🍔" },
-  { id: "transport", name: "Transport", icon: "🚗" },
-  { id: "other", name: "Other", icon: "📝" },
-];
-
-export default function AddTransactionScreen() {
+export default function AddGoalEntryScreen() {
   const router = useRouter();
+  const colors = useColors();
   const params = useLocalSearchParams<{
-    bookId: string;
+    goalId: string;
     type: string;
-    editId?: string;
-    editAmount?: string;
-    editRemark?: string;
-    editType?: string;
   }>();
 
-  const bookId = params.bookId!;
-  const initialType = (params.type as "IN" | "OUT") || "OUT";
-  const isEditing = !!params.editId;
+  const goalId = params.goalId!;
+  const entryType = (params.type as "IN" | "OUT") || "IN";
 
-  const createTransactionMutation = useCreateTransaction();
-  const updateTransactionMutation = useUpdateTransaction();
+  const createGoalTransactionMutation = useCreateGoalTransaction();
 
-  const [type, setType] = useState<"IN" | "OUT">(initialType);
   const [amount, setAmount] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("other");
   const [remark, setRemark] = useState("");
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
-
-  useEffect(() => {
-    if (isEditing) {
-      setType((params.editType as "IN" | "OUT") || initialType);
-      setAmount(params.editAmount || "");
-      setRemark(params.editRemark || "");
-      // Note: If the API provided date/time separately in params, we would set them here.
-      // For now, we'll keep the current date/time unless passed from [id].tsx
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const formatDate = (date: Date) => {
     const year = date.getFullYear();
@@ -91,60 +68,29 @@ export default function AddTransactionScreen() {
     };
   }, []);
 
-  const isDeposit = type === "IN";
-  const accentColor = isDeposit ? "#2E7D32" : "#C62828";
-  const screenTitle = isEditing
-    ? "Edit Transaction"
-    : isDeposit
-      ? "Cash In"
-      : "Cash Out";
+  const isAdd = entryType === "IN";
+  const accentColor = isAdd ? colors.primary : colors.error;
+  const screenTitle = isAdd ? "Add Funds" : "Withdraw Funds";
 
   const handleSubmit = async () => {
-    if (!amount || parseFloat(amount) <= 0) {
+    const parsed = parseFloat(amount);
+    if (!amount || isNaN(parsed) || parsed <= 0) {
       Alert.alert("Error", "Please enter a valid amount");
       return;
     }
 
-    if (!isDeposit && !selectedCategory) {
-      Alert.alert("Error", "Please select a category");
-      return;
-    }
-
     const payload = {
-      book_id: bookId,
-      type,
-      amount: parseFloat(amount),
-      category_id: !isDeposit
-        ? selectedCategory === "other"
-          ? undefined
-          : selectedCategory
-        : undefined,
-      remark,
+      goal_id: goalId,
+      type: entryType,
+      amount: parsed,
+      remark: remark || undefined,
       date: formatDate(date),
       time: formatTime(date),
     };
 
-    let response: any;
     try {
-      if (isEditing) {
-        const updatePayload = {
-          amount: parseFloat(amount),
-          category_id: !isDeposit
-            ? selectedCategory === "other"
-              ? undefined
-              : selectedCategory
-            : undefined,
-          remark,
-          date: formatDate(date),
-          time: formatTime(date),
-        };
-        response = await updateTransactionMutation.mutateAsync({
-          id: params.editId!,
-          transaction: updatePayload,
-        });
-      } else {
-        response = await createTransactionMutation.mutateAsync(payload);
-      }
+      const response: any =
+        await createGoalTransactionMutation.mutateAsync(payload);
 
       if (response?.success) {
         Toast.show({
@@ -161,22 +107,16 @@ export default function AddTransactionScreen() {
         });
       }
     } catch (e: any) {
-      console.log("ZOD ERROR DATA: ", e?.response?.data);
-      const errorMessage =
-        e?.response?.data?.message ||
-        e?.response?.data?.error ||
-        e?.message ||
-        "Failed to save transaction";
+      const errorMessage = e?.message || "Failed to save entry";
       Toast.show({
         type: "error",
-        text1: "Validation Error",
+        text1: "Error",
         text2: errorMessage,
       });
     }
   };
 
-  const isPending =
-    createTransactionMutation.isPending || updateTransactionMutation.isPending;
+  const isPending = createGoalTransactionMutation.isPending;
 
   return (
     <>
@@ -195,20 +135,64 @@ export default function AddTransactionScreen() {
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
         >
+          {/* Type Toggle */}
+          {/* <View className="flex-row gap-3 my-6 bg-gray-100 rounded-2xl p-1.5">
+            <TouchableOpacity
+              onPress={() => setEntryType("IN")}
+              className={cn(
+                "flex-1 flex-row items-center justify-center gap-2 py-3.5 rounded-xl",
+                isAdd ? "bg-white shadow-sm" : "bg-transparent",
+              )}
+            >
+              <PlusCircle
+                size={20}
+                color={isAdd ? colors.primary : colors.muted}
+              />
+              <Text
+                className={cn(
+                  "text-sm font-bold",
+                  isAdd ? "text-gray-900" : "text-gray-500",
+                )}
+              >
+                Add
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setEntryType("OUT")}
+              className={cn(
+                "flex-1 flex-row items-center justify-center gap-2 py-3.5 rounded-xl",
+                !isAdd ? "bg-white shadow-sm" : "bg-transparent",
+              )}
+            >
+              <MinusCircle
+                size={20}
+                color={!isAdd ? colors.error : colors.muted}
+              />
+              <Text
+                className={cn(
+                  "text-sm font-bold",
+                  !isAdd ? "text-gray-900" : "text-gray-500",
+                )}
+              >
+                Withdraw
+              </Text>
+            </TouchableOpacity>
+          </View> */}
+
           {/* Amount Input */}
-          <View className="mb-5">
+          <View className="mb-6">
             <Text className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">
               Amount
             </Text>
             <View
-              className="flex-row items-center rounded-xl px-4 py-3.5 border-2"
+              className="flex-row items-center rounded-2xl px-5 py-4 border-2"
               style={{
-                borderColor: accentColor + "30",
-                backgroundColor: accentColor + "08",
+                borderColor: accentColor + "20",
+                backgroundColor: accentColor + "05",
               }}
             >
               <Text
-                className="text-2xl font-bold"
+                className="text-3xl font-bold"
                 style={{ color: accentColor }}
               >
                 $
@@ -217,83 +201,54 @@ export default function AddTransactionScreen() {
                 value={amount}
                 onChangeText={setAmount}
                 placeholder="0.00"
-                placeholderTextColor="#A1A1AA"
+                placeholderTextColor={colors.muted}
                 keyboardType="decimal-pad"
-                className="flex-1 ml-2 text-2xl font-bold text-gray-900"
+                className="flex-1 ml-3 text-3xl font-bold text-gray-900"
                 autoFocus={true}
               />
             </View>
           </View>
 
-          {/* Category (only for Cash Out) */}
-          {!isDeposit && (
-            <View className="mb-5">
-              <Text className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">
-                Category
-              </Text>
-              <View className="flex-row gap-3">
-                {EXPENSE_CATEGORIES.map((category) => {
-                  const isSelected = selectedCategory === category.id;
-                  return (
-                    <TouchableOpacity
-                      key={category.id}
-                      onPress={() => setSelectedCategory(category.id)}
-                      className={`flex-1 items-center justify-center py-3 rounded-xl border ${isSelected ? "bg-[#E6F3FF] border-[#2563EB]" : "bg-gray-100 border-red-200"}`}
-                    >
-                      <Text className="text-2xl mb-1">{category.icon}</Text>
-                      <Text
-                        style={{ color: isSelected ? "#2563EB" : "#111827" }}
-                        className="text-xs font-medium text-center"
-                      >
-                        {category.name}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </View>
-          )}
-
           {/* Remark */}
-          <View className="mb-5">
+          <View className="mb-6">
             <Text className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">
-              Remark
+              Note (optional)
             </Text>
             <TextInput
               value={remark}
               onChangeText={setRemark}
               placeholder={
-                isDeposit
-                  ? "e.g., Salary, Business income..."
-                  : "e.g., Lunch, Uber ride..."
+                isAdd
+                  ? "e.g., Monthly savings, Bonus..."
+                  : "e.g., Emergency withdrawal..."
               }
-              placeholderTextColor="#A1A1AA"
-              className="bg-gray-100 rounded-xl px-4 py-3.5 border border-gray-200 text-gray-900 text-base"
-              style={{ textAlignVertical: "top", minHeight: 80 }}
+              placeholderTextColor={colors.muted}
+              className="bg-gray-100 rounded-2xl px-5 py-4 text-gray-900 text-lg"
+              style={{ textAlignVertical: "top", minHeight: 120 }}
               multiline
-              numberOfLines={3}
+              numberOfLines={4}
             />
           </View>
 
           {/* Date & Time */}
-          <View className="mb-5">
+          <View className="mb-6">
             <Text className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">
               Date & Time
             </Text>
             <View className="flex-row gap-3">
               <TouchableOpacity
                 onPress={() => setShowDatePicker(true)}
-                className="flex-1 bg-gray-100 rounded-xl px-4 py-3.5 border border-gray-200 flex-row items-center justify-between"
+                className="flex-1 bg-gray-100 rounded-2xl px-5 py-4 border border-gray-200 flex-row items-center justify-between"
               >
-                <Text className="text-gray-900 text-base">
+                <Text className="text-gray-900 text-lg">
                   {date.toLocaleDateString()}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => setShowTimePicker(true)}
-                className="flex-1 bg-gray-100 rounded-xl px-4 py-3.5 border border-gray-200 flex-row items-center justify-between"
+                className="flex-1 bg-gray-100 rounded-2xl px-5 py-4 border border-gray-200 flex-row items-center justify-between"
               >
-                <Text className="text-gray-900 text-base">
+                <Text className="text-gray-900 text-lg">
                   {date.toLocaleTimeString([], {
                     hour: "2-digit",
                     minute: "2-digit",
@@ -358,11 +313,9 @@ export default function AddTransactionScreen() {
             <Text className="text-white font-bold text-base tracking-wider">
               {isPending
                 ? "SAVING..."
-                : isEditing
-                  ? "SAVE CHANGES"
-                  : isDeposit
-                    ? "ADD CASH IN"
-                    : "ADD CASH OUT"}
+                : isAdd
+                  ? "SAVE ADDITION"
+                  : "SAVE WITHDRAWAL"}
             </Text>
           </TouchableOpacity>
         </View>

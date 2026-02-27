@@ -19,7 +19,7 @@ import { useUpdateProfile } from "@/api/user";
 
 export default function ProfileScreen() {
   const colors = useColors();
-  const { authState } = useAuth();
+  const { authState, setAuthState } = useAuth();
   const user = authState.user;
 
   const [name, setName] = useState(user?.name ?? "");
@@ -78,7 +78,18 @@ export default function ProfileScreen() {
     }
 
     updateProfile(payload, {
-      onSuccess: () => {
+      onSuccess: (data) => {
+        if (!authState.user) return;
+
+        setAuthState({
+          ...authState,
+          user: {
+            ...authState.user,
+            name: data.data.name,
+            contact_number: data.data.contact_number,
+            avatar: data.data.avatar,
+          },
+        });
         Alert.alert("Saved", "Your profile has been updated.");
       },
       onError: (error) => {

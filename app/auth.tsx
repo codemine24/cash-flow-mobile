@@ -44,14 +44,30 @@ export default function AuthScreen() {
 
   const animateToStep = (nextStep: Step) => {
     Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: -30, duration: 200, useNativeDriver: true }),
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: -30,
+        duration: 200,
+        useNativeDriver: true,
+      }),
     ]).start(() => {
       setStep(nextStep);
       slideAnim.setValue(30);
       Animated.parallel([
-        Animated.timing(fadeAnim, { toValue: 1, duration: 250, useNativeDriver: true }),
-        Animated.timing(slideAnim, { toValue: 0, duration: 250, useNativeDriver: true }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 250,
+          useNativeDriver: true,
+        }),
       ]).start();
     });
   };
@@ -63,13 +79,13 @@ export default function AuthScreen() {
       const response: any = await sentOtpMutation.mutateAsync(email);
       if (response?.success) {
         Toast.show({
-          type: 'success',
+          type: "success",
           text1: response?.message || "OTP sent!",
         });
         animateToStep("otp");
       } else {
         Toast.show({
-          type: 'error',
+          type: "error",
           text1: response?.message || "Failed to send OTP",
         });
       }
@@ -86,10 +102,11 @@ export default function AuthScreen() {
 
       if (response?.success) {
         Toast.show({
-          type: 'success',
+          type: "success",
           text1: response?.message || "Verified!",
         });
         setAuthState({
+          //
           isAuthenticated: true,
           user: {
             id: response?.data?.id,
@@ -98,20 +115,19 @@ export default function AuthScreen() {
             contact_number: response?.data?.contact_number,
             role: response?.data?.role,
             avatar: response?.data?.avatar,
-            status: response?.data?.status
+            status: response?.data?.status,
           },
         });
         router.replace("/(tabs)");
       } else {
         Toast.show({
-          type: 'error',
+          type: "error",
           text1: response?.message || "Invalid OTP",
         });
       }
     } catch (error) {
       console.error(error);
     }
-
   };
 
   return (
@@ -233,7 +249,13 @@ export default function AuthScreen() {
                   {sentOtpMutation.isPending ? (
                     <ActivityIndicator color="#fff" />
                   ) : (
-                    <Text style={{ fontSize: 16, fontWeight: "700", color: "#ffffff" }}>
+                    <Text
+                      style={{
+                        fontSize: 16,
+                        fontWeight: "700",
+                        color: "#ffffff",
+                      }}
+                    >
                       Send OTP
                     </Text>
                   )}
@@ -255,13 +277,30 @@ export default function AuthScreen() {
                   <ShieldCheck size={26} color="#00929A" />
                 </View>
 
-                <Text style={{ fontSize: 26, fontWeight: "800", color: "#111827", marginBottom: 8 }}>
+                <Text
+                  style={{
+                    fontSize: 26,
+                    fontWeight: "800",
+                    color: "#111827",
+                    marginBottom: 8,
+                  }}
+                >
                   Check your email
                 </Text>
-                <Text style={{ fontSize: 14, color: "#6b7280", marginBottom: 4, lineHeight: 20 }}>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    color: "#6b7280",
+                    marginBottom: 4,
+                    lineHeight: 20,
+                  }}
+                >
                   We sent a code to
                 </Text>
-                <Text style={{ fontSize: 14, color: "#00929A" }} className="mb-4">
+                <Text
+                  style={{ fontSize: 14, color: "#00929A" }}
+                  className="mb-4"
+                >
                   {email}
                 </Text>
 
@@ -290,7 +329,9 @@ export default function AuthScreen() {
                 >
                   <Text style={{ fontSize: 13, color: "#6b7280" }}>
                     Didn&apos;t receive it?{" "}
-                    <Text style={{ color: "#00929A", fontWeight: "600" }}>Resend</Text>
+                    <Text style={{ color: "#00929A", fontWeight: "600" }}>
+                      Resend
+                    </Text>
                   </Text>
                 </TouchableOpacity>
 
@@ -310,7 +351,13 @@ export default function AuthScreen() {
                   {verifyOtpMutation.isPending ? (
                     <ActivityIndicator color="#fff" />
                   ) : (
-                    <Text style={{ fontSize: 16, fontWeight: "700", color: "#ffffff" }}>
+                    <Text
+                      style={{
+                        fontSize: 16,
+                        fontWeight: "700",
+                        color: "#ffffff",
+                      }}
+                    >
                       Verify OTP
                     </Text>
                   )}
@@ -318,7 +365,6 @@ export default function AuthScreen() {
               </>
             )}
           </Animated.View>
-
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>

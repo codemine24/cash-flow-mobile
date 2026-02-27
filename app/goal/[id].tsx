@@ -11,9 +11,6 @@ import { ScreenContainer } from "@/components/screen-container";
 import { useGoals } from "@/lib/goal-context";
 import { formatCurrency } from "@/lib/goal-utils";
 import { useColors } from "@/hooks/use-colors";
-import { useState } from "react";
-import { AddGoalEntryModal } from "@/components/add-goal-entry-modal";
-import { Plus } from "lucide-react-native";
 import { useGoal } from "@/api/goal";
 
 export default function GoalDetailScreen() {
@@ -23,7 +20,6 @@ export default function GoalDetailScreen() {
   const router = useRouter();
   const colors = useColors();
   const { deleteEntry } = useGoals();
-  const [showAddModal, setShowAddModal] = useState(false);
 
   if (!goal) {
     return (
@@ -190,26 +186,82 @@ export default function GoalDetailScreen() {
         </ScrollView>
       </ScreenContainer>
 
-      {/* Floating Action Button */}
-      <TouchableOpacity
-        onPress={() => setShowAddModal(true)}
-        className="absolute bottom-10 right-6 w-14 h-14 bg-primary rounded-full items-center justify-center shadow-lg"
+      {/* Floating Action Buttons */}
+      <View
         style={{
-          shadowColor: colors.primary,
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.3,
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          flexDirection: "row",
+          paddingHorizontal: 16,
+          paddingBottom: 32,
+          paddingTop: 12,
+          backgroundColor: "#FFFFFF",
+          gap: 12,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.1,
           shadowRadius: 8,
-          elevation: 8,
+          elevation: 10,
         }}
       >
-        <Plus size={24} color="white" />
-      </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => {
+            router.push({
+              pathname: "/goal/add-entry",
+              params: { goalId: id, type: "IN" },
+            });
+          }}
+          className="rounded-2xl"
+          style={{
+            flex: 1,
+            backgroundColor: "#2E7D32",
+            paddingVertical: 14,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Text
+            style={{
+              color: "white",
+              fontWeight: "bold",
+              fontSize: 14,
+              letterSpacing: 1,
+            }}
+          >
+            + ADD
+          </Text>
+        </TouchableOpacity>
 
-      <AddGoalEntryModal
-        visible={showAddModal}
-        goalId={goal.data.id}
-        onClose={() => setShowAddModal(false)}
-      />
+        <TouchableOpacity
+          onPress={() => {
+            router.push({
+              pathname: "/goal/add-entry",
+              params: { goalId: id, type: "OUT" },
+            });
+          }}
+          className="rounded-2xl"
+          style={{
+            flex: 1,
+            backgroundColor: "#C62828",
+            paddingVertical: 14,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Text
+            style={{
+              color: "white",
+              fontWeight: "bold",
+              fontSize: 14,
+              letterSpacing: 1,
+            }}
+          >
+            - WITHDRAW
+          </Text>
+        </TouchableOpacity>
+      </View>
     </>
   );
 }
