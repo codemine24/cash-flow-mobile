@@ -13,6 +13,9 @@ import { useState } from "react";
 import { useColors } from "@/hooks/use-colors";
 import { useAuth } from "@/context/auth-context";
 import { Camera, User } from "lucide-react-native";
+import * as ImagePicker from "expo-image-picker";
+import type { ImagePickerAsset } from "expo-image-picker";
+import { useUpdateProfile } from "@/api/user";
 
 export default function ProfileScreen() {
   const colors = useColors();
@@ -24,19 +27,65 @@ export default function ProfileScreen() {
     user?.contact_number ?? "",
   );
   const email = user?.email ?? "";
-  const avatar = user?.avatar ?? "";
-  const [isSaving, setIsSaving] = useState(false);
+  const [avatarUri, setAvatarUri] = useState<string>(
+    `https://uxrythodzgdirjlbmkxx.supabase.co/storage/v1/object/public/user/${user?.avatar}`,
+  );
+  const [pickedAsset, setPickedAsset] = useState<ImagePickerAsset | null>(null);
+  const { mutate: updateProfile, isPending: isSaving } = useUpdateProfile();
+
+  const handlePickAvatar = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Permission required",
+        "Please allow access to your photo library to change your avatar.",
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets.length > 0) {
+      setAvatarUri(result.assets[0].uri);
+      setPickedAsset(result.assets[0]);
+    }
+  };
 
   const handleSave = () => {
     if (!name.trim()) {
       Alert.alert("Error", "Name cannot be empty");
       return;
     }
-    setIsSaving(true);
-    setTimeout(() => {
-      setIsSaving(false);
-      Alert.alert("Saved", "Your profile has been updated.");
-    }, 800);
+
+    const payload: Parameters<typeof updateProfile>[0] = {
+      name,
+      contact_number: contactNumber,
+    };
+
+    if (pickedAsset) {
+      const uri = pickedAsset.uri;
+      const ext = uri.split(".").pop() ?? "jpg";
+      payload.avatar = {
+        uri,
+        name: `avatar.${ext}`,
+        type: pickedAsset.mimeType ?? `image/${ext}`,
+      };
+    }
+
+    updateProfile(payload, {
+      onSuccess: () => {
+        Alert.alert("Saved", "Your profile has been updated.");
+      },
+      onError: (error) => {
+        console.error("Update profile error:", error);
+        Alert.alert("Error", "Failed to update profile. Please try again.");
+      },
+    });
   };
 
   return (
@@ -56,9 +105,9 @@ export default function ProfileScreen() {
           <View className="items-center mb-8">
             <View className="relative">
               <View className="w-24 h-24 rounded-full bg-surface border-2 border-border items-center justify-center overflow-hidden">
-                {avatar ? (
+                {avatarUri ? (
                   <Image
-                    source={{ uri: avatar }}
+                    source={{ uri: avatarUri }}
                     className="w-24 h-24 rounded-full"
                     resizeMode="cover"
                   />
@@ -67,12 +116,7 @@ export default function ProfileScreen() {
                 )}
               </View>
               <TouchableOpacity
-                onPress={() =>
-                  Alert.alert(
-                    "Coming soon",
-                    "Avatar upload will be available soon.",
-                  )
-                }
+                onPress={handlePickAvatar}
                 className="absolute bottom-0 right-0 w-8 h-8 bg-primary rounded-full items-center justify-center border-2 border-background"
               >
                 <Camera size={14} color="#fff" />
