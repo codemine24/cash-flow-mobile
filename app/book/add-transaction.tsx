@@ -9,6 +9,7 @@ import {
   Platform,
   Keyboard,
 } from "react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { useCreateTransaction, useUpdateTransaction } from "@/api/transaction";
 import Toast from "react-native-toast-message";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
@@ -42,15 +43,34 @@ export default function AddTransactionScreen() {
   const [selectedCategory, setSelectedCategory] = useState("other");
   const [remark, setRemark] = useState("");
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [date, setDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
 
   useEffect(() => {
     if (isEditing) {
       setType((params.editType as "IN" | "OUT") || initialType);
       setAmount(params.editAmount || "");
       setRemark(params.editRemark || "");
+      // Note: If the API provided date/time separately in params, we would set them here.
+      // For now, we'll keep the current date/time unless passed from [id].tsx
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const formatDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const formatTime = (date: Date) => {
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    const seconds = String(date.getSeconds()).padStart(2, "0");
+    return `${hours}:${minutes}:${seconds}`;
+  };
 
   useEffect(() => {
     const showEvent =
@@ -100,6 +120,8 @@ export default function AddTransactionScreen() {
           : selectedCategory
         : undefined,
       remark,
+      date: formatDate(date),
+      time: formatTime(date),
     };
 
     let response: any;
@@ -113,6 +135,8 @@ export default function AddTransactionScreen() {
               : selectedCategory
             : undefined,
           remark,
+          date: formatDate(date),
+          time: formatTime(date),
         };
         response = await updateTransactionMutation.mutateAsync({
           id: params.editId!,
@@ -249,6 +273,62 @@ export default function AddTransactionScreen() {
               multiline
               numberOfLines={3}
             />
+          </View>
+
+          {/* Date & Time */}
+          <View className="mb-5">
+            <Text className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">
+              Date & Time
+            </Text>
+            <View className="flex-row gap-3">
+              <TouchableOpacity
+                onPress={() => setShowDatePicker(true)}
+                className="flex-1 bg-gray-100 rounded-xl px-4 py-3.5 border border-gray-200 flex-row items-center justify-between"
+              >
+                <Text className="text-gray-900 text-base">
+                  {date.toLocaleDateString()}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setShowTimePicker(true)}
+                className="flex-1 bg-gray-100 rounded-xl px-4 py-3.5 border border-gray-200 flex-row items-center justify-between"
+              >
+                <Text className="text-gray-900 text-base">
+                  {date.toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {showDatePicker && (
+              <DateTimePicker
+                value={date}
+                mode="date"
+                display={Platform.OS === "ios" ? "spinner" : "default"}
+                onChange={(event, selectedDate) => {
+                  setShowDatePicker(Platform.OS === "ios");
+                  if (selectedDate) {
+                    setDate(selectedDate);
+                  }
+                }}
+              />
+            )}
+
+            {showTimePicker && (
+              <DateTimePicker
+                value={date}
+                mode="time"
+                display={Platform.OS === "ios" ? "spinner" : "default"}
+                onChange={(event, selectedTime) => {
+                  setShowTimePicker(Platform.OS === "ios");
+                  if (selectedTime) {
+                    setDate(selectedTime);
+                  }
+                }}
+              />
+            )}
           </View>
         </ScrollView>
 
