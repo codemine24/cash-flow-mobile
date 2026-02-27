@@ -5,11 +5,10 @@ import {
   Info,
   LogOut,
   Settings,
-  User
+  User,
 } from "lucide-react-native";
 import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
-import { logout as apiLogout } from "@/lib/_core/api";
 import { clearUserInfo, removeAccessToken } from "@/lib/_core/auth";
 import { useAuth } from "@/context/auth-context";
 
@@ -48,7 +47,7 @@ function SettingsRow({
         <Text
           className="text-base font-semibold"
           style={danger ? { color: "#ef4444" } : undefined}
-        // NativeWind doesn't support conditional class well here, use style prop
+          // NativeWind doesn't support conditional class well here, use style prop
         >
           {title}
         </Text>
@@ -87,12 +86,18 @@ export default function SettingsScreen() {
     <ScreenContainer edges={["left", "right"]} className="bg-background">
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 40 }}
+        contentContainerStyle={{
+          paddingHorizontal: 20,
+          paddingTop: 12,
+          paddingBottom: 40,
+        }}
       >
         {/* ── Header ── */}
         <View className="mb-6">
           <Text className="text-3xl font-bold text-foreground">Settings</Text>
-          <Text className="text-sm text-muted mt-1">Manage your account &amp; preferences</Text>
+          <Text className="text-sm text-muted mt-1">
+            Manage your account &amp; preferences
+          </Text>
         </View>
 
         {/* ── Main settings group ── */}
@@ -126,14 +131,14 @@ export default function SettingsScreen() {
         <View className="bg-surface rounded-2xl border border-border px-4">
           <TouchableOpacity
             onPress={() =>
-              Alert.alert(
-                "Log Out",
-                "Are you sure you want to log out?",
-                [
-                  { text: "Cancel", style: "cancel" },
-                  { text: "Log Out", style: "destructive", onPress: handleLogout },
-                ]
-              )
+              Alert.alert("Log Out", "Are you sure you want to log out?", [
+                { text: "Cancel", style: "cancel" },
+                {
+                  text: "Log Out",
+                  style: "destructive",
+                  onPress: handleLogout,
+                },
+              ])
             }
             activeOpacity={0.7}
             className="flex-row items-center py-4 gap-3"
@@ -141,7 +146,9 @@ export default function SettingsScreen() {
             <View className="w-11 h-11 rounded-xl items-center justify-center bg-red-50">
               <LogOut size={22} color="#ef4444" />
             </View>
-            <Text className="text-base font-semibold text-red-500">Log Out</Text>
+            <Text className="text-base font-semibold text-red-500">
+              Log Out
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
