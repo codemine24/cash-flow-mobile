@@ -209,8 +209,8 @@ export default function GoalDetailScreen() {
         <TouchableOpacity
           onPress={() => {
             router.push({
-              pathname: "/book/add-transaction",
-              params: { bookId: id, type: "IN" },
+              pathname: "/goal/add-entry",
+              params: { goalId: id, type: "IN" },
             });
           }}
           className="rounded-2xl"
@@ -237,8 +237,8 @@ export default function GoalDetailScreen() {
         <TouchableOpacity
           onPress={() => {
             router.push({
-              pathname: "/book/add-transaction",
-              params: { bookId: id, type: "OUT" },
+              pathname: "/goal/add-entry",
+              params: { goalId: id, type: "OUT" },
             });
           }}
           className="rounded-2xl"
