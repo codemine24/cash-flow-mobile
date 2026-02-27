@@ -9,6 +9,7 @@ import {
   Platform,
   Keyboard,
 } from "react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { useCreateGoalTransaction } from "@/api/goal-transaction";
 import Toast from "react-native-toast-message";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
@@ -30,6 +31,23 @@ export default function AddGoalEntryScreen() {
   const [amount, setAmount] = useState("");
   const [remark, setRemark] = useState("");
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [date, setDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+
+  const formatDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const formatTime = (date: Date) => {
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    const seconds = String(date.getSeconds()).padStart(2, "0");
+    return `${hours}:${minutes}:${seconds}`;
+  };
 
   useEffect(() => {
     const showEvent =
@@ -66,6 +84,8 @@ export default function AddGoalEntryScreen() {
       type: entryType,
       amount: parsed,
       remark: remark || undefined,
+      date: formatDate(date),
+      time: formatTime(date),
     };
 
     try {
@@ -209,9 +229,65 @@ export default function AddGoalEntryScreen() {
               numberOfLines={4}
             />
           </View>
+
+          {/* Date & Time */}
+          <View className="mb-6">
+            <Text className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">
+              Date & Time
+            </Text>
+            <View className="flex-row gap-3">
+              <TouchableOpacity
+                onPress={() => setShowDatePicker(true)}
+                className="flex-1 bg-gray-100 rounded-2xl px-5 py-4 border border-gray-200 flex-row items-center justify-between"
+              >
+                <Text className="text-gray-900 text-lg">
+                  {date.toLocaleDateString()}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setShowTimePicker(true)}
+                className="flex-1 bg-gray-100 rounded-2xl px-5 py-4 border border-gray-200 flex-row items-center justify-between"
+              >
+                <Text className="text-gray-900 text-lg">
+                  {date.toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {showDatePicker && (
+              <DateTimePicker
+                value={date}
+                mode="date"
+                display={Platform.OS === "ios" ? "spinner" : "default"}
+                onChange={(event, selectedDate) => {
+                  setShowDatePicker(Platform.OS === "ios");
+                  if (selectedDate) {
+                    setDate(selectedDate);
+                  }
+                }}
+              />
+            )}
+
+            {showTimePicker && (
+              <DateTimePicker
+                value={date}
+                mode="time"
+                display={Platform.OS === "ios" ? "spinner" : "default"}
+                onChange={(event, selectedTime) => {
+                  setShowTimePicker(Platform.OS === "ios");
+                  if (selectedTime) {
+                    setDate(selectedTime);
+                  }
+                }}
+              />
+            )}
+          </View>
         </ScrollView>
 
-        {/* Submit Button */}
+        {/* Submit Button - Sticks above keyboard */}
         <View
           style={{
             position: "absolute",
@@ -219,7 +295,7 @@ export default function AddGoalEntryScreen() {
             left: 0,
             right: 0,
             paddingHorizontal: 20,
-            paddingVertical: 16,
+            paddingVertical: 12,
             backgroundColor: "#FFFFFF",
             borderTopWidth: 1,
             borderTopColor: "#F3F4F6",
@@ -228,17 +304,18 @@ export default function AddGoalEntryScreen() {
           <TouchableOpacity
             onPress={handleSubmit}
             disabled={isPending}
-            className="rounded-2xl py-4.5 items-center justify-center shadow-md active:opacity-90"
+            className="rounded-xl py-4 items-center justify-center"
             style={{
               backgroundColor: isPending ? accentColor + "80" : accentColor,
             }}
+            activeOpacity={0.8}
           >
-            <Text className="text-white font-extrabold text-base tracking-widest uppercase">
+            <Text className="text-white font-bold text-base tracking-wider">
               {isPending
-                ? "Saving..."
+                ? "SAVING..."
                 : isAdd
-                  ? "Save Addition"
-                  : "Save Withdrawal"}
+                  ? "SAVE ADDITION"
+                  : "SAVE WITHDRAWAL"}
             </Text>
           </TouchableOpacity>
         </View>
