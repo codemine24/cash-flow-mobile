@@ -13,7 +13,7 @@ const schemeFromBundleId = `manus${timestamp}`;
 const env = {
   // App branding - update these values directly (do not use env vars)
   appName: "Cash Flow",
-  appSlug: "cash-flow-mobile",
+  appSlug: "expense-tracker-mobile",
   // S3 URL of the app logo - set this to the URL returned by generate_image when creating custom logo
   // Leave empty to use the default icon from assets/images/icon.png
   logoUrl: "https://private-us-east-1.manuscdn.com/sessionFile/Rxzbqnxl7kY7Dxm0kvMqL6/sandbox/pxDlL876YTEPdHeyLMGPvt-img-1_1771487041000_na1fn_aWNvbg.png?x-oss-process=image/resize,w_1920,h_1920/format,webp/quality,q_80&Expires=1798761600&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvUnh6YnFueGw3a1k3RHhtMGt2TXFMNi9zYW5kYm94L3B4RGxMODc2WVRFUGRIZXlMTUdQdnQtaW1nLTFfMTc3MTQ4NzA0MTAwMF9uYTFmbl9hV052YmcucG5nP3gtb3NzLXByb2Nlc3M9aW1hZ2UvcmVzaXplLHdfMTkyMCxoXzE5MjAvZm9ybWF0LHdlYnAvcXVhbGl0eSxxXzgwIiwiQ29uZGl0aW9uIjp7IkRhdGVMZXNzVGhhbiI6eyJBV1M6RXBvY2hUaW1lIjoxNzk4NzYxNjAwfX19XX0_&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=lhfkIyP8PLxAN35-93UVYXEX99OgQ8tBxoEyBsgv3PPyKAd9DUac6nQFpVeS5AWHQ5HQ-p66OlpZOXLYqHiu3feo6LJppPf-JtX3SX0Rz3lRHz-yGAcW7pWxx2Q2ibRq8Jb0tcMaDJk8O11ijjYVG~yX0Q2At7FU5QjuPH5pS~9vzfJQodgi3jmsqjlxqYL~Xuz6OW9NUhkNYXb6fKJQ8iBH2ykObcnChWjBcIGXy-H2O8nGYSg7gI--2u-5DQO~Zhk51DgjlKRhnwVwhFsFeD9SV6LA6wzX6pL2qq3nQEbJL5mq13LO2q8ZSB6wWy5kJXfxGmqBvNJbZdYPL8Ta4A__",
