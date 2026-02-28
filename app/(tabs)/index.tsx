@@ -16,6 +16,7 @@ import {
   View,
 } from "react-native";
 import { WalletCard } from "@/components/wallet-card";
+import { useGetAllUsers } from "@/api/user";
 
 type SortOption = "name" | "created_at" | "updated_at";
 
@@ -39,6 +40,10 @@ export default function HomeScreen() {
   const [tempSortBy, setTempSortBy] = useState<SortOption>("updated_at");
   const [tempSortOrder, setTempSortOrder] = useState<"asc" | "desc">("desc");
 
+  const { data: usersData, isLoading: usersLoading } = useGetAllUsers();
+
+  console.log("usersData", usersData?.data.data);
+
   const openSortModal = () => {
     setTempSortBy(sortBy);
     setTempSortOrder(sortOrder);
@@ -57,7 +62,10 @@ export default function HomeScreen() {
   };
 
   const handleAddMember = (book: BookData) => {
-    // Add member logic
+    router.push({
+      pathname: "/book/members",
+      params: { bookId: book.id, bookName: book.name },
+    } as any);
   };
 
   return (

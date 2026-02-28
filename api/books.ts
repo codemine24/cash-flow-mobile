@@ -114,3 +114,18 @@ export const useDeleteBook = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.all }),
   });
 };
+
+export const useShareBook = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ book_id, user_id, role }: { book_id: string, user_id: string, role: string }) => {
+      try {
+        const response = await apiClient.post(`${BOOK_API_URL}/share`, { book_id, user_id, role });
+        return response;
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.all }),
+  });
+};
