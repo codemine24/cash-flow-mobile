@@ -13,12 +13,8 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { useCreateTransaction, useUpdateTransaction } from "@/api/transaction";
 import Toast from "react-native-toast-message";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { ChevronRight } from "lucide-react-native";
 
-const EXPENSE_CATEGORIES = [
-  { id: "food", name: "Food", icon: "🍔" },
-  { id: "transport", name: "Transport", icon: "🚗" },
-  { id: "other", name: "Other", icon: "📝" },
-];
 
 export default function AddTransactionScreen() {
   const router = useRouter();
@@ -29,6 +25,8 @@ export default function AddTransactionScreen() {
     editAmount?: string;
     editRemark?: string;
     editType?: string;
+    selectedCategoryId?: string;
+    selectedCategoryName?: string;
   }>();
 
   const bookId = params.bookId!;
@@ -40,7 +38,8 @@ export default function AddTransactionScreen() {
 
   const [type, setType] = useState<"IN" | "OUT">(initialType);
   const [amount, setAmount] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("other");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedCategoryName, setSelectedCategoryName] = useState("");
   const [remark, setRemark] = useState("");
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [date, setDate] = useState(new Date());
@@ -57,6 +56,13 @@ export default function AddTransactionScreen() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (params.selectedCategoryId) {
+      setSelectedCategory(params.selectedCategoryId);
+      setSelectedCategoryName(params.selectedCategoryName || "Unknown Category");
+    }
+  }, [params.selectedCategoryId, params.selectedCategoryName]);
 
   const formatDate = (date: Date) => {
     const year = date.getFullYear();
@@ -231,26 +237,25 @@ export default function AddTransactionScreen() {
               <Text className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">
                 Category
               </Text>
-              <View className="flex-row gap-3">
-                {EXPENSE_CATEGORIES.map((category) => {
-                  const isSelected = selectedCategory === category.id;
-                  return (
-                    <TouchableOpacity
-                      key={category.id}
-                      onPress={() => setSelectedCategory(category.id)}
-                      className={`flex-1 items-center justify-center py-3 rounded-xl border ${isSelected ? "bg-[#E6F3FF] border-[#2563EB]" : "bg-gray-100 border-red-200"}`}
-                    >
-                      <Text className="text-2xl mb-1">{category.icon}</Text>
-                      <Text
-                        style={{ color: isSelected ? "#2563EB" : "#111827" }}
-                        className="text-xs font-medium text-center"
-                      >
-                        {category.name}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
+              <TouchableOpacity
+                onPress={() => {
+                  router.push({
+                    pathname: "/book/select-category",
+                    params: {
+                      bookId: bookId,
+                      currentSelectedId: selectedCategory,
+                    },
+                  });
+                }}
+                className="flex-row items-center bg-gray-100 border border-gray-200 rounded-xl px-4 py-3.5"
+              >
+                <Text
+                  className={`flex-1 text-base ${selectedCategoryName ? "text-gray-900" : "text-gray-400"}`}
+                >
+                  {selectedCategoryName || "Select a category"}
+                </Text>
+                <ChevronRight size={20} color="#9CA3AF" />
+              </TouchableOpacity>
             </View>
           )}
 

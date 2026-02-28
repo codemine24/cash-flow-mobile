@@ -1,7 +1,13 @@
 import apiClient from "@/lib/api-client";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
 const USER_API_URL = "/user";
+
+const keys = {
+  all: ["users"],
+  list: () => [...keys.all, "list"],
+  detail: (id: string) => [...keys.all, "detail", id],
+};
 
 type UpdateProfilePayload = {
   name?: string;
@@ -11,6 +17,27 @@ type UpdateProfilePayload = {
     name: string;
     type: string;
   };
+};
+
+export const useGetAllUsers = (searchParams: { search?: string, sort?: string, sort_order?: string, limit?: number } = {}) => {
+  // Filter out empty/undefined params
+  const params: Record<string, string> = {};
+  if (searchParams.search) params.search_term = searchParams.search;
+  if (searchParams.sort) params.sort = searchParams.sort;
+  if (searchParams.sort_order) params.sort_order = searchParams.sort_order;
+  if (searchParams.limit) params.limit = String(searchParams.limit);
+
+  return useQuery({
+    queryKey: [...keys.list(), params],
+    queryFn: async () => {
+      try {
+        const response = await apiClient.get(USER_API_URL, { params });
+        return response;
+      } catch (error) {
+        console.log(error);
+      }
+    },
+  });
 };
 
 const updateProfile = async (payload: UpdateProfilePayload) => {
