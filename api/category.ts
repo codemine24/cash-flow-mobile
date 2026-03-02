@@ -39,3 +39,25 @@ export const useCreateCategory = () => {
       onSuccess: () => queryClient.invalidateQueries({queryKey: keys.list()}),
   });
 };
+
+export const useUpdateCategory = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+      mutationFn: async ({ id, category }: { id: string; category: Partial<CategoryPayload> }) => {
+          const response = await apiClient.patch(`${CATEGORY_API_URL}/${id}`, category);
+          return response;
+      },
+      onSuccess: () => queryClient.invalidateQueries({queryKey: keys.list()}),
+  });
+};
+
+export const useDeleteCategory = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+      mutationFn: async (id: string) => {
+          const response = await apiClient.delete(`${CATEGORY_API_URL}`, { data: { ids: [id] } });
+          return response;
+      },
+      onSuccess: () => queryClient.invalidateQueries({queryKey: keys.list()}),
+  });
+};

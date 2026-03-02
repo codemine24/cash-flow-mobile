@@ -104,6 +104,7 @@ export default function RootLayout() {
                 <Stack.Screen name="book/[id]" options={{ headerShown: true }} />
                 <Stack.Screen name="book/members" options={{ headerShown: true }} />
                 <Stack.Screen name="book/select-category" options={{ headerShown: true }} />
+                <Stack.Screen name="book/manage-categories" options={{ headerShown: true }} />
                 <Stack.Screen name="book/add-transaction" options={{ headerShown: true }} />
                 <Stack.Screen name="search-wallet" options={{ headerShown: true, title: "" }} />
                 <Stack.Screen name="settings/app-settings" options={{ headerShown: true }} />

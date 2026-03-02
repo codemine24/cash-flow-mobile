@@ -11,7 +11,7 @@ import {
   Platform,
 } from "react-native";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { Plus, Check, X } from "lucide-react-native";
+import { Plus, Check, X, Settings } from "lucide-react-native";
 import { useGetCategories, useCreateCategory } from "@/api/category";
 import Toast from "react-native-toast-message";
 
@@ -97,7 +97,17 @@ export default function SelectCategoryScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: "Choose Category", headerBackTitle: "Back" }} />
+      <Stack.Screen
+        options={{
+          title: "Choose Category",
+          headerBackTitle: "Back",
+          headerRight: () => (
+            <TouchableOpacity onPress={() => router.push({ pathname: "/book/manage-categories", params: { bookId: params.bookId } })}>
+              <Settings size={22} color="#1f2937" />
+            </TouchableOpacity>
+          ),
+        }}
+      />
       <View className="flex-1 bg-white">
         {isLoading ? (
           <View className="flex-1 items-center justify-center">
