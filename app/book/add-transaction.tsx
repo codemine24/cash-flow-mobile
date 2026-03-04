@@ -15,7 +15,6 @@ import Toast from "react-native-toast-message";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { ChevronRight } from "lucide-react-native";
 
-
 export default function AddTransactionScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{
@@ -60,7 +59,9 @@ export default function AddTransactionScreen() {
   useEffect(() => {
     if (params.selectedCategoryId) {
       setSelectedCategory(params.selectedCategoryId);
-      setSelectedCategoryName(params.selectedCategoryName || "Unknown Category");
+      setSelectedCategoryName(
+        params.selectedCategoryName || "Unknown Category",
+      );
     }
   }, [params.selectedCategoryId, params.selectedCategoryName]);
 
@@ -130,8 +131,9 @@ export default function AddTransactionScreen() {
       time: formatTime(date),
     };
 
-    let response: any;
     try {
+      let response: any;
+
       if (isEditing) {
         const updatePayload = {
           amount: parseFloat(amount),
