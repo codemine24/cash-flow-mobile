@@ -33,9 +33,11 @@ const keys = {
   all: ["books"],
   list: () => [...keys.all, "list"],
   detail: (id: string) => [...keys.all, "detail", id],
-}
+};
 
-export const useBooks = (searchParams: { search?: string, sort?: string, sort_order?: string } = {}) => {
+export const useBooks = (
+  searchParams: { search?: string; sort?: string; sort_order?: string } = {},
+) => {
   // Filter out empty/undefined params
   const params: Record<string, string> = {};
   if (searchParams.search) params.search_term = searchParams.search;
@@ -88,9 +90,11 @@ export const useCreateBook = () => {
 export const useUpdateBook = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, name }: { id: string, name: string }) => {
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
       try {
-        const response = await apiClient.patch(`${BOOK_API_URL}/${id}`, { name });
+        const response = await apiClient.patch(`${BOOK_API_URL}/${id}`, {
+          name,
+        });
         return response;
       } catch (error) {
         console.log(error);
@@ -118,9 +122,21 @@ export const useDeleteBook = () => {
 export const useShareBook = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ book_id, user_id, role }: { book_id: string, user_id: string, role: string }) => {
+    mutationFn: async ({
+      book_id,
+      email,
+      role,
+    }: {
+      book_id: string;
+      email: string;
+      role: string;
+    }) => {
       try {
-        const response = await apiClient.post(`${BOOK_API_URL}/share`, { book_id, user_id, role });
+        const response = await apiClient.post(`${BOOK_API_URL}/share`, {
+          book_id,
+          email,
+          role,
+        });
         return response;
       } catch (error) {
         console.log(error);

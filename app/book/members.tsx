@@ -97,10 +97,11 @@ const MemberCard = ({
       {/* Right */}
       <View className="flex-row items-center">
         <Text
-          className={`text-[12px] font-semibold mr-2 px-2 py-1 rounded-md ${role === "EDITOR"
-            ? "bg-blue-100 text-blue-700"
-            : "bg-gray-100 text-gray-700"
-            }`}
+          className={`text-[12px] font-semibold mr-2 px-2 py-1 rounded-md ${
+            role === "EDITOR"
+              ? "bg-blue-100 text-blue-700"
+              : "bg-gray-100 text-gray-700"
+          }`}
         >
           {role}
         </Text>
@@ -167,7 +168,7 @@ export default function MembersScreen() {
   const [searchValue, setSearchValue] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState<any>(null);
-  const [role, setRole] = useState<"EDITOR" | "VIEWER">("VIEWER");
+  const [role, setRole] = useState<"EDITOR" | "VIEWER" | "ADMIN">("VIEWER");
 
   // Mock API Mutations (replace with real if defined)
   const addMemberMutation = useShareBook();
@@ -239,7 +240,7 @@ export default function MembersScreen() {
         { member_id: editingMember.id, role },
         {
           onSuccess: () => setModalVisible(false),
-        }
+        },
       );
     } else {
       if (!selectedUser) {
@@ -247,10 +248,10 @@ export default function MembersScreen() {
         return;
       }
       addMemberMutation.mutate(
-        { book_id: bookId, user_id: selectedUser.id, role },
+        { book_id: bookId, email: selectedUser.email, role },
         {
           onSuccess: () => setModalVisible(false),
-        }
+        },
       );
     }
   };
@@ -267,7 +268,11 @@ export default function MembersScreen() {
           </View>
         ) : (
           <FlatList
-            contentContainerStyle={{ padding: 16, paddingTop: 0, paddingBottom: 100 }}
+            contentContainerStyle={{
+              padding: 16,
+              paddingTop: 0,
+              paddingBottom: 100,
+            }}
             data={members}
             keyExtractor={(item, index) => item?.id?.toString() || `${index}`}
             renderItem={({ item }) => (
@@ -354,16 +359,18 @@ export default function MembersScreen() {
                     keyboardType="email-address"
                     autoCorrect={false}
                   />
-                  {!editingMember && searchingUsers && searchValue.length > 0 && (
-                    <View
-                      className="absolute w-full left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg p-4 items-center"
-                      style={{ top: 50, zIndex: 100 }}
-                    >
-                      <View className="w-full flex items-center justify-center">
-                        <ActivityIndicator size="small" color="#00929A" />
+                  {!editingMember &&
+                    searchingUsers &&
+                    searchValue.length > 0 && (
+                      <View
+                        className="absolute w-full left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg p-4 items-center"
+                        style={{ top: 50, zIndex: 100 }}
+                      >
+                        <View className="w-full flex items-center justify-center">
+                          <ActivityIndicator size="small" color="#00929A" />
+                        </View>
                       </View>
-                    </View>
-                  )}
+                    )}
                 </View>
 
                 {/* Search Results Dropdown */}
@@ -376,7 +383,7 @@ export default function MembersScreen() {
                       className="absolute left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg w-full max-h-[180px] overflow-hidden"
                       style={{
                         top: 70,
-                        zIndex: 100
+                        zIndex: 100,
                       }}
                     >
                       <ScrollView keyboardShouldPersistTaps="handled">
@@ -391,7 +398,9 @@ export default function MembersScreen() {
                           >
                             <View className="w-8 h-8 rounded-full bg-primary/10 items-center justify-center mr-3">
                               <Text className="text-primary font-bold text-sm">
-                                {(usr.name || usr.email || "U").charAt(0).toUpperCase()}
+                                {(usr.name || usr.email || "U")
+                                  .charAt(0)
+                                  .toUpperCase()}
                               </Text>
                             </View>
                             <View>
@@ -407,7 +416,8 @@ export default function MembersScreen() {
                       </ScrollView>
                     </View>
                   ) : (
-                    debouncedSearch === searchValue && searchValue.length > 1 && (
+                    debouncedSearch === searchValue &&
+                    searchValue.length > 1 && (
                       <View
                         className="absolute w-full left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg p-4 items-center"
                         style={{ top: 70, zIndex: 100 }}
@@ -420,22 +430,24 @@ export default function MembersScreen() {
                   ))}
               </View>
 
-              {/* Role Extractor */}
-              <View className="mb-8" style={{ zIndex: 1 }}>
+              {/* Role Selector */}
+              <View className="mb-4" style={{ zIndex: 1 }}>
                 <Text className="text-sm font-semibold text-gray-700 mb-2">
                   Role
                 </Text>
                 <View className="flex-row items-center gap-3">
                   <TouchableOpacity
                     onPress={() => setRole("VIEWER")}
-                    className={`flex-1 py-3.5 items-center rounded-xl border ${role === "VIEWER"
-                      ? "bg-primary/10 border-primary"
-                      : "bg-surface border-border"
-                      }`}
+                    className={`flex-1 py-3.5 items-center rounded-xl border ${
+                      role === "VIEWER"
+                        ? "bg-primary/10 border-primary"
+                        : "bg-surface border-border"
+                    }`}
                   >
                     <Text
-                      className={`font-semibold text-base ${role === "VIEWER" ? "text-primary" : "text-gray-600"
-                        }`}
+                      className={`font-semibold text-base ${
+                        role === "VIEWER" ? "text-primary" : "text-gray-600"
+                      }`}
                     >
                       Viewer
                     </Text>
@@ -443,19 +455,78 @@ export default function MembersScreen() {
 
                   <TouchableOpacity
                     onPress={() => setRole("EDITOR")}
-                    className={`flex-1 py-3.5 items-center rounded-xl border ${role === "EDITOR"
-                      ? "bg-primary/10 border-primary"
-                      : "bg-surface border-border"
-                      }`}
+                    className={`flex-1 py-3.5 items-center rounded-xl border ${
+                      role === "EDITOR"
+                        ? "bg-primary/10 border-primary"
+                        : "bg-surface border-border"
+                    }`}
                   >
                     <Text
-                      className={`font-semibold text-base ${role === "EDITOR" ? "text-primary" : "text-gray-600"
-                        }`}
+                      className={`font-semibold text-base ${
+                        role === "EDITOR" ? "text-primary" : "text-gray-600"
+                      }`}
                     >
                       Editor
                     </Text>
                   </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={() => setRole("ADMIN")}
+                    className={`flex-1 py-3.5 items-center rounded-xl border ${
+                      role === "ADMIN"
+                        ? "bg-primary/10 border-primary"
+                        : "bg-surface border-border"
+                    }`}
+                  >
+                    <Text
+                      className={`font-semibold text-base ${
+                        role === "ADMIN" ? "text-primary" : "text-gray-600"
+                      }`}
+                    >
+                      Admin
+                    </Text>
+                  </TouchableOpacity>
                 </View>
+              </View>
+
+              {/* Role Permissions Info */}
+              <View className="mb-8 rounded-xl bg-gray-50 border border-gray-200 p-4">
+                <Text className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">
+                  {role === "VIEWER"
+                    ? "Viewer can"
+                    : role === "EDITOR"
+                      ? "Editor can"
+                      : "Admin can"}
+                </Text>
+                {(role === "VIEWER"
+                  ? [
+                      { icon: "✅", label: "View all transactions" },
+                      { icon: "✅", label: "View balance & summary" },
+                      { icon: "❌", label: "Add or edit transactions" },
+                      { icon: "❌", label: "Manage members" },
+                      { icon: "❌", label: "Delete the book" },
+                    ]
+                  : role === "EDITOR"
+                    ? [
+                        { icon: "✅", label: "View all transactions" },
+                        { icon: "✅", label: "Add & edit transactions" },
+                        { icon: "✅", label: "Delete own transactions" },
+                        { icon: "❌", label: "Manage members" },
+                        { icon: "❌", label: "Delete the book" },
+                      ]
+                    : [
+                        { icon: "✅", label: "View all transactions" },
+                        { icon: "✅", label: "Add & edit transactions" },
+                        { icon: "✅", label: "Delete any transactions" },
+                        { icon: "✅", label: "Manage & invite members" },
+                        { icon: "❌", label: "Delete the book" },
+                      ]
+                ).map((item, i) => (
+                  <View key={i} className="flex-row items-center mb-1.5">
+                    <Text className="text-sm mr-2">{item.icon}</Text>
+                    <Text className="text-sm text-gray-700">{item.label}</Text>
+                  </View>
+                ))}
               </View>
 
               <View className="flex-row gap-3">
@@ -463,18 +534,28 @@ export default function MembersScreen() {
                   onPress={() => setModalVisible(false)}
                   className="w-24 bg-surface rounded-xl py-4 border border-border items-center justify-center"
                 >
-                  <Text className="text-foreground font-semibold text-base">Cancel</Text>
+                  <Text className="text-foreground font-semibold text-base">
+                    Cancel
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={handleSubmitModal}
-                  disabled={addMemberMutation.isPending || updateRoleMutation.isPending}
-                  className={`flex-1 rounded-xl py-4 items-center justify-center flex-row ${addMemberMutation.isPending || updateRoleMutation.isPending
-                    ? "bg-primary/50"
-                    : "bg-primary"
-                    }`}
+                  disabled={
+                    addMemberMutation.isPending || updateRoleMutation.isPending
+                  }
+                  className={`flex-1 rounded-xl py-4 items-center justify-center flex-row ${
+                    addMemberMutation.isPending || updateRoleMutation.isPending
+                      ? "bg-primary/50"
+                      : "bg-primary"
+                  }`}
                 >
-                  {(addMemberMutation.isPending || updateRoleMutation.isPending) && (
-                    <ActivityIndicator color="white" className="mr-2" size="small" />
+                  {(addMemberMutation.isPending ||
+                    updateRoleMutation.isPending) && (
+                    <ActivityIndicator
+                      color="white"
+                      className="mr-2"
+                      size="small"
+                    />
                   )}
                   <Text className="text-white font-bold text-base">
                     {editingMember ? "Save" : "Add"}
