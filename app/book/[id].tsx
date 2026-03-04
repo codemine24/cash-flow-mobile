@@ -1,26 +1,16 @@
 import { useBook } from "@/api/books";
-import { useDeleteTransaction } from "@/api/transaction";
 import { ScreenContainer } from "@/components/screen-container";
 
 import { formatCurrency } from "@/lib/book-utils";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 
-import { useMemo, useState } from "react";
-import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
-import Toast from "react-native-toast-message";
-import Popover from "react-native-popover-view";
-import { Edit3, Trash2, MoreHorizontal } from "lucide-react-native";
+import { useMemo } from "react";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 export default function BookDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { data: book, isLoading } = useBook(id!);
-  const deleteTransaction = useDeleteTransaction();
-
-  const [activeMenuTransaction, setActiveMenuTransaction] = useState<
-    string | null
-  >(null);
-
   const groupedTransactions = useMemo(() => {
     if (!book?.data?.transactions) return [];
 
@@ -79,52 +69,18 @@ export default function BookDetailScreen() {
     );
   }
 
-  const handleDeleteTransaction = async (transactionId: string) => {
-    setActiveMenuTransaction(null);
-    Alert.alert(
-      "Delete Transaction",
-      "Are you sure you want to delete this transaction?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            const res: any = await deleteTransaction.mutateAsync([
-              transactionId,
-            ]);
-
-            if (res?.success) {
-              Toast.show({
-                type: "success",
-                text1: "Transaction deleted successfully",
-              });
-            } else {
-              Toast.show({
-                type: "error",
-                text1: res?.message || "Failed to delete transaction",
-              });
-            }
-          },
-        },
-      ],
-    );
-  };
-
-  const handleEditTransaction = (item: any) => {
-    setActiveMenuTransaction(null);
+  const handleOpenTransaction = (item: any) => {
     router.push({
-      pathname: "/book/add-transaction",
+      pathname: "/book/transaction-detail",
       params: {
         bookId: id,
+        transactionId: item.id,
         type: item.type,
-        editId: item.id,
-        editAmount: item.amount?.toString(),
-        editRemark: item.remark || "",
-        editType: item.type,
+        amount: item.amount?.toString(),
+        remark: item.remark || "",
+        category: item.category || "",
+        createdAt: item.created_at,
+        runningBalance: item.runningBalance?.toString(),
       },
     });
   };
@@ -202,15 +158,17 @@ export default function BookDetailScreen() {
 
                 {/* Transactions */}
                 {group.data.map((item, index) => (
-                  <View
+                  <TouchableOpacity
                     key={item.id}
+                    activeOpacity={0.7}
+                    onPress={() => handleOpenTransaction(item)}
                     className={`rounded-2xl mt-4 px-4 py-4 flex-row justify-between bg-white ${
                       index !== group.data.length - 1
                         ? "border-b border-border"
                         : ""
                     }`}
                   >
-                    <View className="flex-1 mr-2 ">
+                    <View className="flex-1 mr-2">
                       <View className="flex-row items-center justify-between mb-2">
                         <View className="bg-[#E6F3FF] px-2 py-[2px] rounded">
                           <Text className="text-primary text-[11px] font-bold uppercase tracking-wider">
@@ -232,7 +190,7 @@ export default function BookDetailScreen() {
                           .toLowerCase()}
                       </Text>
                     </View>
-                    <View className="items-end ">
+                    <View className="items-end justify-center">
                       <Text
                         className={`text-sm font-bold mb-1 ${
                           item.type === "IN"
@@ -242,54 +200,11 @@ export default function BookDetailScreen() {
                       >
                         {formatCurrency(item.amount)}
                       </Text>
-                      <Text className="text-sm text-gray-500 mb-1">
+                      <Text className="text-sm text-gray-500">
                         Balance: {formatCurrency(item.runningBalance)}
                       </Text>
-                      {/* 3-Dot Menu */}
-                      <Popover
-                        isVisible={activeMenuTransaction === item.id}
-                        onRequestClose={() => setActiveMenuTransaction(null)}
-                        from={
-                          <TouchableOpacity
-                            onPress={() => setActiveMenuTransaction(item.id)}
-                            className="p-1 items-center justify-center -mr-1"
-                          >
-                            <MoreHorizontal size={18} color="#9CA3AF" />
-                          </TouchableOpacity>
-                        }
-                        backgroundStyle={{
-                          backgroundColor: "rgba(0, 0, 0, 0.4)",
-                        }}
-                        popoverStyle={{
-                          borderRadius: 12,
-                          padding: 4,
-                          width: 160,
-                          backgroundColor: "white",
-                        }}
-                      >
-                        <View>
-                          <TouchableOpacity
-                            className="flex-row items-center px-4 py-3 border-b border-border"
-                            onPress={() => handleEditTransaction(item)}
-                          >
-                            <Edit3 size={18} color="#374151" />
-                            <Text className="text-gray-700 ml-3 font-medium">
-                              Edit
-                            </Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity
-                            className="flex-row items-center px-4 py-3"
-                            onPress={() => handleDeleteTransaction(item.id)}
-                          >
-                            <Trash2 size={18} color="#EF4444" />
-                            <Text className="text-red-500 ml-3 font-medium">
-                              Delete
-                            </Text>
-                          </TouchableOpacity>
-                        </View>
-                      </Popover>
                     </View>
-                  </View>
+                  </TouchableOpacity>
                 ))}
               </View>
             ))}
