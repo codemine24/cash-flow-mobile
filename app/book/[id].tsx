@@ -75,12 +75,6 @@ export default function BookDetailScreen() {
       params: {
         bookId: id,
         transactionId: item.id,
-        type: item.type,
-        amount: item.amount?.toString(),
-        remark: item.remark || "",
-        category: item.category || "",
-        createdAt: item.created_at,
-        runningBalance: item.runningBalance?.toString(),
       },
     });
   };
