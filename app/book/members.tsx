@@ -248,7 +248,7 @@ export default function MembersScreen() {
         return;
       }
       addMemberMutation.mutate(
-        { book_id: bookId, user_id: selectedUser.id, role },
+        { book_id: bookId, email: selectedUser.email, role },
         {
           onSuccess: () => setModalVisible(false),
         },
