@@ -200,6 +200,7 @@ export default function TransactionDetailScreen() {
             const res: any = await deleteTransaction.mutateAsync([
               params.transactionId,
             ]);
+            console.log("res......", res);
             if (res?.success) {
               Toast.show({
                 type: "success",
