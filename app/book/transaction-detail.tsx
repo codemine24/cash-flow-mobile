@@ -21,6 +21,7 @@ import {
   Trash2,
 } from "lucide-react-native";
 
+import { useAuth } from "@/context/auth-context";
 import Toast from "react-native-toast-message";
 
 // ── helper: avatar (real image or initials fallback) ─────────────────────────
@@ -123,10 +124,13 @@ export default function TransactionDetailScreen() {
     transactionId: string;
   }>();
 
+  const { authState } = useAuth();
   const { data: txData, isLoading } = useTransaction(params.transactionId!);
   const deleteTransaction = useDeleteTransaction();
 
   const transaction = txData?.data;
+  const canDelete =
+    !!authState.user?.id && authState.user.id === transaction?.entry_by_id;
   const isIn = transaction?.type === "IN";
   const accentColor = isIn ? "#16a34a" : "#dc2626";
   const headerBg = isIn ? "#16a34a" : "#dc2626";
@@ -247,13 +251,15 @@ export default function TransactionDetailScreen() {
               >
                 <Copy size={20} color="#ffffff" />
               </TouchableOpacity>
-              <TouchableOpacity
-                onPress={handleDelete}
-                style={{ padding: 8 }}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              >
-                <Trash2 size={20} color="#fca5a5" />
-              </TouchableOpacity>
+              {canDelete && (
+                <TouchableOpacity
+                  onPress={handleDelete}
+                  style={{ padding: 8 }}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Trash2 size={20} color="#fca5a5" />
+                </TouchableOpacity>
+              )}
             </View>
           ),
         }}
