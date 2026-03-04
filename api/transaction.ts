@@ -90,11 +90,9 @@ export const useUpdateTransaction = () => {
 export const useDeleteTransaction = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (ids: string[]) => {
+    mutationFn: async (id: string) => {
       try {
-        const response = await apiClient.delete(TRANSACTION_API_URL, {
-          data: { ids },
-        });
+        const response = await apiClient.delete(`${TRANSACTION_API_URL}/${id}`);
         return response;
       } catch (error) {
         console.log(error);
