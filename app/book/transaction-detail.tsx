@@ -1,17 +1,121 @@
 import { useDeleteTransaction, useTransaction } from "@/api/transaction";
-import { formatCurrency } from "@/lib/book-utils";
-import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { Copy, Edit3, Trash2 } from "lucide-react-native";
 import {
   ActivityIndicator,
   Alert,
+  Image,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { formatCurrency } from "@/lib/book-utils";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import {
+  BookOpen,
+  Calendar,
+  Clock,
+  Copy,
+  Edit3,
+  MessageSquare,
+  Tag,
+  Trash2,
+} from "lucide-react-native";
+
 import Toast from "react-native-toast-message";
 
+// ── helper: avatar (real image or initials fallback) ─────────────────────────
+const SUPABASE_AVATAR_BASE =
+  "https://uxrythodzgdirjlbmkxx.supabase.co/storage/v1/object/public/user/";
+
+function Avatar({
+  name,
+  avatarFile,
+  size = 36,
+}: {
+  name?: string;
+  avatarFile?: string;
+  size?: number;
+}) {
+  const uri = avatarFile ? `${SUPABASE_AVATAR_BASE}${avatarFile}` : undefined;
+  const initials = (name || "?")
+    .split(" ")
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
+  return (
+    <View
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        backgroundColor: "#e5e7eb",
+        alignItems: "center",
+        justifyContent: "center",
+        overflow: "hidden",
+      }}
+    >
+      {uri ? (
+        <Image source={{ uri }} style={{ width: size, height: size }} />
+      ) : (
+        <Text
+          style={{ fontSize: size * 0.36, fontWeight: "700", color: "#6b7280" }}
+        >
+          {initials}
+        </Text>
+      )}
+    </View>
+  );
+}
+
+// ── helpers: divider + info row ──────────────────────────────────────────────
+function Divider() {
+  return (
+    <View
+      style={{ height: 1, backgroundColor: "#f3f4f6", marginHorizontal: 20 }}
+    />
+  );
+}
+
+function InfoRow({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}) {
+  return (
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 20,
+        paddingVertical: 14,
+        gap: 14,
+      }}
+    >
+      <View style={{ width: 20, alignItems: "center" }}>{icon}</View>
+      <Text style={{ flex: 1, fontSize: 14, color: "#6b7280" }}>{label}</Text>
+      <Text
+        style={{
+          fontSize: 14,
+          fontWeight: "600",
+          color: "#111827",
+          maxWidth: "55%",
+          textAlign: "right",
+        }}
+        numberOfLines={2}
+      >
+        {value}
+      </Text>
+    </View>
+  );
+}
+
+// ── main screen ──────────────────────────────────────────────────────────────
 export default function TransactionDetailScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{
@@ -24,8 +128,8 @@ export default function TransactionDetailScreen() {
 
   const transaction = txData?.data;
   const isIn = transaction?.type === "IN";
-  const accentColor = isIn ? "#2E7D32" : "#C62828";
-  const typeLabelBg = isIn ? "#E8F5E9" : "#FFEBEE";
+  const accentColor = isIn ? "#16a34a" : "#dc2626";
+  const headerBg = isIn ? "#16a34a" : "#dc2626";
   const typeLabel = isIn ? "Cash In" : "Cash Out";
 
   const formattedDate = transaction?.created_at
@@ -38,10 +142,7 @@ export default function TransactionDetailScreen() {
 
   const formattedTime = transaction?.created_at
     ? new Date(transaction.created_at)
-        .toLocaleTimeString("en-US", {
-          hour: "numeric",
-          minute: "2-digit",
-        })
+        .toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
         .toLowerCase()
     : "—";
 
@@ -55,10 +156,7 @@ export default function TransactionDetailScreen() {
 
   const updatedTime = transaction?.updated_at
     ? new Date(transaction.updated_at)
-        .toLocaleTimeString("en-US", {
-          hour: "numeric",
-          minute: "2-digit",
-        })
+        .toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
         .toLowerCase()
     : "—";
 
@@ -127,6 +225,9 @@ export default function TransactionDetailScreen() {
           headerShown: true,
           headerBackTitle: "Back",
           title: "Transaction Detail",
+          headerStyle: { backgroundColor: headerBg },
+          headerTintColor: "#fff",
+          headerTitleStyle: { color: "#fff", fontWeight: "700" },
           headerRight: () => (
             <View
               style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
@@ -136,176 +237,282 @@ export default function TransactionDetailScreen() {
                 style={{ padding: 8 }}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
-                <Edit3 size={20} color="#374151" />
+                <Edit3 size={20} color="#ffffff" />
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleDuplicate}
                 style={{ padding: 8 }}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
-                <Copy size={20} color="#374151" />
+                <Copy size={20} color="#ffffff" />
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleDelete}
                 style={{ padding: 8 }}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
-                <Trash2 size={20} color="#EF4444" />
+                <Trash2 size={20} color="#fca5a5" />
               </TouchableOpacity>
             </View>
           ),
         }}
       />
 
-      <View className="flex-1 bg-white">
+      <View style={{ flex: 1, backgroundColor: headerBg }}>
         {isLoading ? (
-          <View className="flex-1 items-center justify-center">
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: "#f9fafb",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
             <ActivityIndicator size="large" color="#6B7280" />
-            <Text className="text-gray-500 mt-3 text-sm">Loading...</Text>
+            <Text style={{ color: "#6B7280", marginTop: 12, fontSize: 14 }}>
+              Loading...
+            </Text>
           </View>
         ) : (
-          <>
-            <ScrollView
-              className="flex-1 bg-white"
-              contentContainerStyle={{
-                paddingHorizontal: 20,
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ flexGrow: 1 }}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* ── Colored Header: Amount ── */}
+            <View
+              style={{
+                alignItems: "center",
+                paddingTop: 28,
+                paddingBottom: 36,
+                paddingHorizontal: 24,
+              }}
+            >
+              <Text
+                style={{
+                  color: "rgba(255,255,255,0.75)",
+                  fontSize: 12,
+                  fontWeight: "600",
+                  letterSpacing: 2,
+                  textTransform: "uppercase",
+                  marginBottom: 8,
+                }}
+              >
+                {typeLabel}
+              </Text>
+              <Text
+                style={{
+                  color: "#fff",
+                  fontSize: 44,
+                  fontWeight: "800",
+                  letterSpacing: -1,
+                }}
+              >
+                {isIn ? "+" : "-"}
+                {formatCurrency(parseFloat(transaction?.amount || "0"))}
+              </Text>
+              <Text
+                style={{
+                  color: "rgba(255,255,255,0.65)",
+                  fontSize: 13,
+                  marginTop: 8,
+                }}
+              >
+                {formattedDate} · {formattedTime}
+              </Text>
+            </View>
+
+            {/* ── Receipt Sheet ── */}
+            <View
+              style={{
+                flex: 1,
+                backgroundColor: "#fff",
+                borderTopLeftRadius: 28,
+                borderTopRightRadius: 28,
+                paddingTop: 8,
                 paddingBottom: 40,
               }}
-              showsVerticalScrollIndicator={false}
             >
-              {/* Amount Hero */}
+              {/* Drag handle decoration */}
               <View
-                className="rounded-2xl items-center justify-center mt-5 mb-6 py-10"
-                style={{ backgroundColor: accentColor + "12" }}
+                style={{
+                  width: 36,
+                  height: 4,
+                  borderRadius: 2,
+                  backgroundColor: "#e5e7eb",
+                  alignSelf: "center",
+                  marginBottom: 20,
+                }}
+              />
+
+              {/* Section: Details */}
+              <Text
+                style={{
+                  fontSize: 11,
+                  fontWeight: "700",
+                  color: "#9ca3af",
+                  letterSpacing: 1.5,
+                  textTransform: "uppercase",
+                  paddingHorizontal: 20,
+                  marginBottom: 4,
+                }}
               >
-                <View
-                  className="px-3 py-1 rounded-full mb-3"
-                  style={{ backgroundColor: typeLabelBg }}
-                >
+                Details
+              </Text>
+
+              <InfoRow
+                icon={<Tag size={16} color="#9ca3af" />}
+                label="Category"
+                value={transaction?.category?.title || "Uncategorized"}
+              />
+              <Divider />
+              <InfoRow
+                icon={<MessageSquare size={16} color="#9ca3af" />}
+                label="Remark"
+                value={transaction?.remark || "No remark"}
+              />
+              <Divider />
+              <InfoRow
+                icon={<Calendar size={16} color="#9ca3af" />}
+                label="Date"
+                value={formattedDate}
+              />
+              <Divider />
+              <InfoRow
+                icon={<Clock size={16} color="#9ca3af" />}
+                label="Time"
+                value={formattedTime}
+              />
+              <Divider />
+              <InfoRow
+                icon={<BookOpen size={16} color="#9ca3af" />}
+                label="Book"
+                value={transaction?.book?.name || "—"}
+              />
+
+              {/* Section: Activity */}
+              <Text
+                style={{
+                  fontSize: 11,
+                  fontWeight: "700",
+                  color: "#9ca3af",
+                  letterSpacing: 1.5,
+                  textTransform: "uppercase",
+                  paddingHorizontal: 20,
+                  marginTop: 28,
+                  marginBottom: 4,
+                }}
+              >
+                Activity
+              </Text>
+
+              {/* Added by */}
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  paddingHorizontal: 20,
+                  paddingVertical: 14,
+                  gap: 14,
+                }}
+              >
+                <Avatar
+                  name={transaction?.entry_by?.name}
+                  avatarFile={transaction?.entry_by?.avatar}
+                />
+                <View style={{ flex: 1 }}>
                   <Text
-                    className="text-xs font-bold uppercase tracking-widest"
-                    style={{ color: accentColor }}
+                    style={{
+                      fontSize: 13,
+                      fontWeight: "600",
+                      color: "#111827",
+                    }}
                   >
-                    {typeLabel}
+                    {transaction?.entry_by?.name || "—"}
                   </Text>
-                </View>
-                <Text
-                  className="text-4xl font-bold"
-                  style={{ color: accentColor }}
-                >
-                  {isIn ? "+" : "-"}
-                  {formatCurrency(parseFloat(transaction?.amount || "0"))}
-                </Text>
-                <Text className="text-gray-500 text-sm mt-2">
-                  {formattedDate} · {formattedTime}
-                </Text>
-              </View>
-
-              {/* Category */}
-              <View className="mb-5">
-                <Text className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">
-                  Category
-                </Text>
-                <View className="bg-gray-100 border border-gray-200 rounded-xl px-4 py-3.5">
-                  <Text className="text-base text-gray-900">
-                    {transaction?.category?.title || "Uncategorized"}
-                  </Text>
-                </View>
-              </View>
-
-              {/* Remark */}
-              <View className="mb-5">
-                <Text className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">
-                  Remark
-                </Text>
-                <View
-                  className="bg-gray-100 border border-gray-200 rounded-xl px-4 py-3.5"
-                  style={{ minHeight: 80 }}
-                >
-                  <Text className="text-base text-gray-900">
-                    {transaction?.remark || "No remark"}
-                  </Text>
-                </View>
-              </View>
-
-              {/* Date & Time */}
-              <View className="mb-5">
-                <Text className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">
-                  Date & Time
-                </Text>
-                <View className="flex-row gap-3">
-                  <View className="flex-1 bg-gray-100 rounded-xl px-4 py-3.5 border border-gray-200">
-                    <Text className="text-gray-900 text-base">
-                      {formattedDate}
+                  {transaction?.entry_by?.email ? (
+                    <Text
+                      style={{ fontSize: 12, color: "#6b7280", marginTop: 1 }}
+                    >
+                      {transaction.entry_by.email}
                     </Text>
-                  </View>
-                  <View className="flex-1 bg-gray-100 rounded-xl px-4 py-3.5 border border-gray-200">
-                    <Text className="text-gray-900 text-base capitalize">
-                      {formattedTime}
-                    </Text>
-                  </View>
+                  ) : null}
                 </View>
-              </View>
-
-              {/* Book */}
-              <View className="mb-5">
-                <Text className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">
-                  Book
-                </Text>
-                <View className="bg-gray-100 border border-gray-200 rounded-xl px-4 py-3.5">
-                  <Text className="text-base text-gray-900">
-                    {transaction?.book?.name || "—"}
+                <View style={{ alignItems: "flex-end" }}>
+                  <Text
+                    style={{
+                      fontSize: 11,
+                      fontWeight: "600",
+                      color: accentColor,
+                      marginBottom: 2,
+                    }}
+                  >
+                    Added
+                  </Text>
+                  <Text style={{ fontSize: 11, color: "#9ca3af" }}>
+                    {formattedDate}
+                  </Text>
+                  <Text style={{ fontSize: 11, color: "#9ca3af" }}>
+                    {formattedTime}
                   </Text>
                 </View>
               </View>
 
-              {/* Entry By / Updated By */}
-              <View className="mb-5">
-                <Text className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">
-                  Activity
-                </Text>
-                <View className="bg-gray-100 border border-gray-200 rounded-xl overflow-hidden">
-                  {/* Entry By */}
+              {transaction?.updated_by && (
+                <>
+                  <Divider />
                   <View
-                    className={`px-4 py-4 ${transaction?.updated_by ? "border-b border-gray-200" : ""}`}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      paddingHorizontal: 20,
+                      paddingVertical: 14,
+                      gap: 14,
+                    }}
                   >
-                    <Text className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
-                      Added by
-                    </Text>
-                    <Text className="text-sm font-semibold text-gray-900">
-                      {transaction?.entry_by?.name || "—"}
-                    </Text>
-                    <Text className="text-xs text-gray-500 mt-0.5">
-                      {transaction?.entry_by?.email || ""}
-                    </Text>
-                    <Text className="text-xs text-gray-400 mt-1">
-                      {formattedDate} · {formattedTime}
-                    </Text>
-                  </View>
-
-                  {/* Updated By */}
-                  {transaction?.updated_by && (
-                    <View className="px-4 py-4">
-                      <Text className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
-                        Last updated by
+                    <Avatar
+                      name={transaction.updated_by.name}
+                      avatarFile={transaction.updated_by.avatar}
+                    />
+                    <View style={{ flex: 1 }}>
+                      <Text
+                        style={{
+                          fontSize: 13,
+                          fontWeight: "600",
+                          color: "#111827",
+                        }}
+                      >
+                        {transaction.updated_by.name || "—"}
                       </Text>
-                      {transaction?.updated_by?.name && (
-                        <Text className="text-sm font-semibold text-gray-900">
-                          {transaction.updated_by.name}
-                        </Text>
-                      )}
-                      <Text className="text-xs text-gray-500 mt-0.5">
+                      <Text
+                        style={{ fontSize: 12, color: "#6b7280", marginTop: 1 }}
+                      >
                         {transaction.updated_by.email}
                       </Text>
-                      <Text className="text-xs text-gray-400 mt-1">
-                        {updatedDate} · {updatedTime}
+                    </View>
+                    <View style={{ alignItems: "flex-end" }}>
+                      <Text
+                        style={{
+                          fontSize: 11,
+                          fontWeight: "600",
+                          color: "#f59e0b",
+                          marginBottom: 2,
+                        }}
+                      >
+                        Updated
+                      </Text>
+                      <Text style={{ fontSize: 11, color: "#9ca3af" }}>
+                        {updatedDate}
+                      </Text>
+                      <Text style={{ fontSize: 11, color: "#9ca3af" }}>
+                        {updatedTime}
                       </Text>
                     </View>
-                  )}
-                </View>
-              </View>
-            </ScrollView>
-          </>
+                  </View>
+                </>
+              )}
+            </View>
+          </ScrollView>
         )}
       </View>
     </>
