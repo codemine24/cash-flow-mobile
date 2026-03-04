@@ -8,13 +8,23 @@ import {
   Alert,
   Platform,
   Keyboard,
+  Image,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useCreateTransaction, useUpdateTransaction } from "@/api/transaction";
 import Toast from "react-native-toast-message";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { ChevronRight } from "lucide-react-native";
+import { ChevronRight, Paperclip, X } from "lucide-react-native";
+import * as ImagePicker from "expo-image-picker";
 
+// ─── Types ───────────────────────────────────────────────────────────────────
+interface PickedFile {
+  uri: string;
+  name: string;
+  type: string;
+}
+
+// ─── Main Screen ─────────────────────────────────────────────────────────────
 export default function AddTransactionScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{
@@ -44,14 +54,13 @@ export default function AddTransactionScreen() {
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [attachments, setAttachments] = useState<PickedFile[]>([]);
 
   useEffect(() => {
     if (isEditing) {
       setType((params.editType as "IN" | "OUT") || initialType);
       setAmount(params.editAmount || "");
       setRemark(params.editRemark || "");
-      // Note: If the API provided date/time separately in params, we would set them here.
-      // For now, we'll keep the current date/time unless passed from [id].tsx
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -98,6 +107,81 @@ export default function AddTransactionScreen() {
     };
   }, []);
 
+  // ── Attachment picker ──────────────────────────────────────────────────────
+  const pickAttachments = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Permission required",
+        "Please allow access to your photo library to add attachments.",
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      const picked: PickedFile[] = result.assets.map((asset) => {
+        const ext = asset.uri.split(".").pop() ?? "jpg";
+        const name = asset.fileName ?? `attachment_${Date.now()}.${ext}`;
+        const type = asset.mimeType ?? `image/${ext}`;
+        return { uri: asset.uri, name, type };
+      });
+      setAttachments((prev) => [...prev, ...picked]);
+    }
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // ── Build FormData ─────────────────────────────────────────────────────────
+  const buildFormData = (isUpdate = false) => {
+    const dataPayload = isUpdate
+      ? {
+          amount: parseFloat(amount),
+          category_id: !isDeposit
+            ? selectedCategory === "other"
+              ? undefined
+              : selectedCategory
+            : undefined,
+          remark,
+          date: formatDate(date),
+          time: formatTime(date),
+        }
+      : {
+          book_id: bookId,
+          type,
+          amount: parseFloat(amount),
+          category_id: !isDeposit
+            ? selectedCategory === "other"
+              ? undefined
+              : selectedCategory
+            : undefined,
+          remark,
+          date: formatDate(date),
+          time: formatTime(date),
+        };
+
+    const formData = new FormData();
+    formData.append("data", JSON.stringify(dataPayload));
+
+    attachments.forEach((file) => {
+      formData.append("attachments", {
+        uri: file.uri,
+        name: file.name,
+        type: file.type,
+      } as any);
+    });
+
+    return formData;
+  };
+
+  // ── Submit ─────────────────────────────────────────────────────────────────
   const isDeposit = type === "IN";
   const accentColor = isDeposit ? "#2E7D32" : "#C62828";
   const screenTitle = isEditing
@@ -117,41 +201,16 @@ export default function AddTransactionScreen() {
       return;
     }
 
-    const payload = {
-      book_id: bookId,
-      type,
-      amount: parseFloat(amount),
-      category_id: !isDeposit
-        ? selectedCategory === "other"
-          ? undefined
-          : selectedCategory
-        : undefined,
-      remark,
-      date: formatDate(date),
-      time: formatTime(date),
-    };
-
     try {
       let response: any;
 
       if (isEditing) {
-        const updatePayload = {
-          amount: parseFloat(amount),
-          category_id: !isDeposit
-            ? selectedCategory === "other"
-              ? undefined
-              : selectedCategory
-            : undefined,
-          remark,
-          date: formatDate(date),
-          time: formatTime(date),
-        };
         response = await updateTransactionMutation.mutateAsync({
           id: params.editId!,
-          transaction: updatePayload,
+          formData: buildFormData(true),
         });
       } else {
-        response = await createTransactionMutation.mutateAsync(payload);
+        response = await createTransactionMutation.mutateAsync(buildFormData());
       }
 
       if (response?.success) {
@@ -169,7 +228,7 @@ export default function AddTransactionScreen() {
         });
       }
     } catch (e: any) {
-      console.log("ZOD ERROR DATA: ", e?.response?.data);
+      console.log("ERROR DATA: ", e?.response?.data);
       const errorMessage =
         e?.response?.data?.message ||
         e?.response?.data?.error ||
@@ -336,6 +395,73 @@ export default function AddTransactionScreen() {
                 }}
               />
             )}
+          </View>
+
+          {/* ── Attachments ── */}
+          <View className="mb-5">
+            <Text className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">
+              Attachments
+            </Text>
+
+            {/* Thumbnail strip */}
+            {attachments.length > 0 && (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={{ marginBottom: 10 }}
+              >
+                <View style={{ flexDirection: "row", gap: 8 }}>
+                  {attachments.map((file, index) => (
+                    <View
+                      key={index}
+                      style={{ position: "relative", marginRight: 4 }}
+                    >
+                      <Image
+                        source={{ uri: file.uri }}
+                        style={{
+                          width: 72,
+                          height: 72,
+                          borderRadius: 10,
+                          backgroundColor: "#f3f4f6",
+                        }}
+                      />
+                      {/* Remove button */}
+                      <TouchableOpacity
+                        onPress={() => removeAttachment(index)}
+                        style={{
+                          position: "absolute",
+                          top: -6,
+                          right: -6,
+                          backgroundColor: "#fff",
+                          borderRadius: 10,
+                          padding: 2,
+                          shadowColor: "#000",
+                          shadowOpacity: 0.15,
+                          shadowRadius: 4,
+                          elevation: 3,
+                        }}
+                        hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                      >
+                        <X size={13} color="#374151" />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
+              </ScrollView>
+            )}
+
+            {/* Pick button */}
+            <TouchableOpacity
+              onPress={pickAttachments}
+              className="flex-row items-center gap-2 bg-gray-100 border border-gray-200 rounded-xl px-4 py-3.5"
+            >
+              <Paperclip size={18} color="#6b7280" />
+              <Text className="text-gray-500 text-base">
+                {attachments.length > 0
+                  ? `${attachments.length} file${attachments.length > 1 ? "s" : ""} selected — tap to add more`
+                  : "Tap to add attachments"}
+              </Text>
+            </TouchableOpacity>
           </View>
         </ScrollView>
 

@@ -8,16 +8,6 @@ const keys = {
   detail: (id: string) => [...keys.all, "detail", id],
 };
 
-interface TransactionRequest {
-  book_id: string;
-  type: string;
-  amount: number;
-  category_id?: string;
-  remark?: string;
-  date?: string;
-  time?: string;
-}
-
 export const useTransactions = () => {
   return useQuery({
     queryKey: keys.list(),
@@ -50,12 +40,15 @@ export const useTransaction = (id: string) => {
 export const useCreateTransaction = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (transaction: TransactionRequest) => {
+    mutationFn: async (formData: FormData) => {
       try {
-        const response = await apiClient.post(TRANSACTION_API_URL, transaction);
+        const response = await apiClient.post(TRANSACTION_API_URL, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
         return response;
       } catch (error) {
         console.log(error);
+        throw error;
       }
     },
     onSuccess: () => {
@@ -70,18 +63,17 @@ export const useUpdateTransaction = () => {
   return useMutation({
     mutationFn: async ({
       id,
-      transaction,
+      formData,
     }: {
       id: string;
-      transaction: Partial<TransactionRequest>;
+      formData: FormData;
     }) => {
-      console.log("transaction......", transaction);
       try {
         const response = await apiClient.patch(
           `${TRANSACTION_API_URL}/${id}`,
-          transaction,
+          formData,
+          { headers: { "Content-Type": "multipart/form-data" } },
         );
-        console.log("response......", response);
         return response;
       } catch (error) {
         console.log(error);
