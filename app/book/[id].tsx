@@ -3,7 +3,7 @@ import { ScreenContainer } from "@/components/screen-container";
 
 import { formatCurrency } from "@/lib/book-utils";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-
+import { UserPlus } from "lucide-react-native";
 import { useMemo } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
@@ -82,7 +82,23 @@ export default function BookDetailScreen() {
   return (
     <>
       <Stack.Screen
-        options={{ title: book.data.name, headerBackTitle: "Books" }}
+        options={{
+          title: book.data.name,
+          headerBackTitle: "Books",
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={() =>
+                router.push({
+                  pathname: "/book/members",
+                  params: { bookId: id, bookName: book.data.name },
+                })
+              }
+              style={{ marginRight: 4, padding: 6 }}
+            >
+              <UserPlus size={22} color="#00929A" />
+            </TouchableOpacity>
+          ),
+        }}
       />
       {/* <ScreenContainer className="px-4"> */}
       <ScrollView
