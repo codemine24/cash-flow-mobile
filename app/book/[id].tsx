@@ -3,7 +3,7 @@ import { ScreenContainer } from "@/components/screen-container";
 
 import { formatCurrency } from "@/lib/book-utils";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { UserPlus } from "lucide-react-native";
+import { UserPlus, Users } from "lucide-react-native";
 import { useMemo } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
@@ -135,6 +135,136 @@ export default function BookDetailScreen() {
             </View>
           </View>
         </View>
+
+        {/* Members Section */}
+        {book?.data?.others_member?.length > 0 && (
+          <View className="bg-white rounded-2xl mb-6 border border-border shadow-sm">
+            {/* Header */}
+            <View className="px-4 py-3 flex-row items-center justify-between border-b border-border">
+              <View className="flex-row items-center gap-2">
+                <Users size={16} color="#6b7280" />
+                <Text className="text-gray-700 font-bold text-[14px] ml-2">
+                  Members
+                </Text>
+              </View>
+              {book.data.others_member.length > 2 && (
+                <TouchableOpacity
+                  onPress={() =>
+                    router.push({
+                      pathname: "/book/members",
+                      params: { bookId: id, bookName: book.data.name },
+                    })
+                  }
+                >
+                  <Text className="text-primary text-[13px] font-semibold">
+                    See All
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Member rows */}
+            {book.data.others_member
+              .slice(0, 2)
+              .map((member: any, index: number) => {
+                const name = member.name || "Anonymous";
+                const email = member.email;
+                const role: string = member.role || "";
+                const initial = name.charAt(0).toUpperCase();
+                return (
+                  <View
+                    key={member.id || index}
+                    className={`px-4 py-3 flex-row items-center justify-between ${
+                      index !== Math.min(book.data.others_member.length, 2) - 1
+                        ? "border-b border-border"
+                        : ""
+                    }`}
+                  >
+                    <View className="flex-row items-center flex-1">
+                      {/* Avatar */}
+                      <View
+                        style={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: 10,
+                          backgroundColor: "rgba(0, 146, 154, 0.12)",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          marginRight: 12,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: "#00929A",
+                            fontWeight: "700",
+                            fontSize: 15,
+                          }}
+                        >
+                          {initial}
+                        </Text>
+                      </View>
+                      {/* Name & Email */}
+                      <View className="flex-1 mr-3">
+                        <Text
+                          className="text-gray-900 font-semibold text-[13px]"
+                          numberOfLines={1}
+                        >
+                          {name}
+                        </Text>
+                        {!!email && (
+                          <Text
+                            className="text-gray-400 text-[11px] mt-0.5"
+                            numberOfLines={1}
+                          >
+                            {email}
+                          </Text>
+                        )}
+                      </View>
+                    </View>
+                    {/* Role badge */}
+                    <View
+                      className={`px-2 py-1 rounded-md ${
+                        role === "EDITOR"
+                          ? "bg-blue-100"
+                          : role === "ADMIN"
+                            ? "bg-purple-100"
+                            : "bg-gray-100"
+                      }`}
+                    >
+                      <Text
+                        className={`text-[11px] font-bold ${
+                          role === "EDITOR"
+                            ? "text-blue-700"
+                            : role === "ADMIN"
+                              ? "text-purple-700"
+                              : "text-gray-600"
+                        }`}
+                      >
+                        {role}
+                      </Text>
+                    </View>
+                  </View>
+                );
+              })}
+
+            {/* More indicator */}
+            {book.data.others_member.length > 2 && (
+              <TouchableOpacity
+                onPress={() =>
+                  router.push({
+                    pathname: "/book/members",
+                    params: { bookId: id, bookName: book.data.name },
+                  })
+                }
+                className="px-4 py-3 border-t border-border items-center"
+              >
+                <Text className="text-primary text-[13px] font-semibold">
+                  +{book.data.others_member.length - 2} more members
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
 
         {/* Showing X entries */}
         <View className="flex-row items-center justify-center mb-5 px-6 rounded-2xl">
